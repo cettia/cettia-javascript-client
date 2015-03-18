@@ -1,0 +1,22 @@
+{
+  "name": "cettia",
+  "version": "1.0.0-Alpha1",
+  "main": "cettia.js",
+  "ignore": [
+    "node_modules",
+    "test",
+    ".*",
+    "bower.json",
+    "LICENSE",
+    "package.json",
+    "README.md"
+  ],
+  "keywords": [
+    "realtime",
+    "websocket",
+    "http",
+    "comet",
+    "streaming",
+    "longpolling"
+  ]
+}
