@@ -33,7 +33,7 @@
     "eventsource": "0.1.6"
   },
   "devDependencies": {
-    "cettia-protocol": "cettia/cettia-protocol#cc8d2e2ca3",
+    "cettia-protocol": "1.0.0-Alpha1",
     "grunt": "0.4.5",
     "mocha": "2.2.1",
     "chai": "2.1.2",
