@@ -357,7 +357,7 @@
         // Reconnection
         var reconnectTimer;
         var reconnectDelay;
-        var reconnectTry;
+        var reconnectTry = 0;
         // For internal use only
         // Establishes a connection
         self.open = function() {
@@ -367,10 +367,6 @@
             transport = null;
             // Cancels the scheduled connection
             clearTimeout(reconnectTimer);
-            // Increases the number of reconnection attempts
-            if (reconnectTry) {
-                reconnectTry++;
-            }
             // Resets event helpers
             for (var type in events) {
                 events[type].unlock();
@@ -528,7 +524,8 @@
             // Locks the connecting event
             events.connecting.lock();
             // Initializes variables related with reconnection
-            reconnectTimer = reconnectDelay = reconnectTry = null;
+            reconnectTimer = reconnectDelay = null;
+            reconnectTry = 0;
         })
         .on("close", function() {
             // From preparing, connecting or opened state
@@ -545,9 +542,9 @@
                 // By adding a handler by one method in event handling
                 // it will be the last one of close event handlers having been added 
                 self.once("close", function() {
-                    reconnectTry = reconnectTry || 1;
                     reconnectDelay = options.reconnect.call(self, reconnectDelay, reconnectTry);
                     if (reconnectDelay !== false) {
+                        reconnectTry++;
                         reconnectTimer = setTimeout(function() {
                             self.open();
                         }, reconnectDelay);
