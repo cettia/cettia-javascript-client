@@ -423,8 +423,8 @@
                         util.stringifyURI(uri, {transport: "longpoll"}));
                 }
             }
-            // Starts a process to find a working transport
-            (function open() {
+            // Finds a working transport
+            (function find() {
                 var uri = candidates.shift();
                 // If every available transport failed
                 if (!uri) {
@@ -434,34 +434,37 @@
                     return;
                 }
                 // Deremines a transport from URI through transports option
-                var trans;
+                var testTransport;
                 for (var i = 0; i < options.transports.length; i++) {
-                    trans = options.transports[i](uri, options);
-                    if (trans) {
+                    testTransport = options.transports[i](uri, options);
+                    if (testTransport) {
                         break;
                     }
                 }
-                // It would be null if it can't run on this environment
-                if (!trans) {
-                    open();
+                // It would be null if it can't run on this environment or handle given URI
+                if (!testTransport) {
+                    find();
                     return;
                 }
                 // This is to stop the whole process to find a working transport 
                 // when socket's close method is called while doing that
                 function stop() {
-                    trans.off("close", open).close();
+                    testTransport.off("close", find).close();
                 }
                 self.once("close", stop);
-                trans.open().on("close", open).on("text", function handshaker(data) {
+                testTransport.on("close", find).on("close", function() {
+                    self.off("close", stop);
+                })
+                .on("text", function handshaker(data) {
                     // handshaker is one-time event handler
-                    trans.off("text", handshaker);
+                    testTransport.off("text", handshaker);
                     var query = util.parseURI(data).query;
                     // An heartbeat option can't be set by user
                     options.heartbeat = +query.heartbeat;
                     // To speed up heartbeat test
                     options._heartbeat = +query._heartbeat || 5000;
                     // Now that handshaking is completed, associates the transport with the socket
-                    transport = trans.off("close", open);
+                    transport = testTransport.off("close", find);
                     var skip;
                     transport.on("text", function(data) {
                         // Because this handler is executed on dispatching text event, 
@@ -494,7 +497,8 @@
                     });
                     // And fires open event to socket
                     self.off("close", stop).fire("open");
-                });
+                })
+                .open();
             })();
         })
         .on("open", function() {
