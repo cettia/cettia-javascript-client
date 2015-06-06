@@ -388,6 +388,8 @@
             }
             return this;
         };
+        // Id
+        var id;
         // State
         var state;
         self.state = function() {
@@ -413,14 +415,16 @@
             // Final URIs to work with transport
             var candidates = util.isArray(uris) ? slice.call(uris) : [uris];
             for (var i = 0; i < candidates.length; i++) {
-                var uri = candidates[i] = util.makeAbsolute(candidates[i]);
+                // Attaches the id to uri
+                var uri = candidates[i] = util.stringifyURI(util.makeAbsolute(candidates[i]), {sid: id});
+                // Translates an abbreviated uri
                 if (/^https?:/.test(uri) && !util.parseURI(uri).query.transport) {
                     candidates.splice(i, 1,
-                        uri.replace(/^http/, "ws"), 
-                        // Usually util.stringifyURI is not used when query is constant
-                        // it's used here for convenience since we need to know if uri has already query
+                        uri.replace(/^http/, "ws"),
+                        // util.stringifyURI is used since we don't know if uri has already query
                         util.stringifyURI(uri, {transport: "stream"}), 
                         util.stringifyURI(uri, {transport: "longpoll"}));
+                    i = i + 2;
                 }
             }
             // Finds a working transport
@@ -458,11 +462,16 @@
                 .on("text", function handshaker(data) {
                     // handshaker is one-time event handler
                     testTransport.off("text", handshaker);
-                    var query = util.parseURI(data).query;
+                    var headers = util.parseURI(data).query;
+                    // An issued id
+                    if (id !== headers.sid) {
+                        id = headers.sid;
+                        self.fire("new");
+                    }
                     // An heartbeat option can't be set by user
-                    options.heartbeat = +query.heartbeat;
+                    options.heartbeat = +headers.heartbeat;
                     // To speed up heartbeat test
-                    options._heartbeat = +query._heartbeat || 5000;
+                    options._heartbeat = +headers._heartbeat || 5000;
                     // Now that handshaking is completed, associates the transport with the socket
                     transport = testTransport.off("close", find);
                     var skip;
