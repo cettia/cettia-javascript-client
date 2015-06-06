@@ -368,9 +368,8 @@
             // Cancels the scheduled connection
             clearTimeout(reconnectTimer);
             // Resets event helpers
-            for (var type in events) {
-                events[type].unlock();
-            }
+            events.connecting.unlock();
+            events.open.unlock();
             // Fires the connecting event and connects to the server
             return self.fire("connecting");
         };
@@ -543,13 +542,10 @@
         .on("close", function() {
             // From preparing, connecting or opened state
             state = "closed";
-            // Locks event whose order is lower than close event
-            for (var type in events) {
-                var event = events[type];
-                if (event.order < events.close.order) {
-                    event.lock();
-                }
-            }
+            // Locks event whose order is lower than close event among reserved events
+            events.connecting.lock();
+            events.open.lock();
+
             // Schedules reconnection
             if (options.reconnect) {
                 // By adding a handler by one method in event handling
@@ -577,7 +573,7 @@
         // Sends an event to the server via the connection
         self.send = function(type, data, onResolved, onRejected) {
             if (state !== "opened") {
-                self.fire(new Error("notopened"));
+                self.fire("cache", [type, data, onResolved, onRejected]);
                 return this;
             }
             
