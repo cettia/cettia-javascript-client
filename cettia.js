@@ -389,6 +389,14 @@
         };
         // Id
         var id;
+        // If the user sets this option, we should have full control of window.name
+        // It's obstructive but inevitable
+        if (options.name) {
+            if (window.name) {
+                var names = util.parseJSON(window.name);
+                id = names[options.name];
+            }
+        }
         // State
         var state;
         self.state = function() {
@@ -508,6 +516,13 @@
                 })
                 .open();
             })();
+        })
+        .on("new", function() {
+            if (options.name) {
+                var names = window.name ? util.parseJSON(window.name) : {};
+                names[options.name] = id;
+                window.name = util.stringifyJSON(names);
+            }
         })
         .on("open", function() {
             // From connecting state
