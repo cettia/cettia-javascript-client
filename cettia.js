@@ -378,12 +378,12 @@
             // Prevents reconnection
             options.reconnect = false;
             clearTimeout(reconnectTimer);
-            if (transport) {
-                // It finally fires close event to socket
-                transport.close();
-            } else {
-                // If this method is called while connecting to the server
+            if (state === "connecting") {
+                // It will execute the connecting transport's stop function
                 self.fire("close");
+            } else if (state === "opened") {
+                // It will fire the close event to socket
+                transport.close();
             }
             return this;
         };
