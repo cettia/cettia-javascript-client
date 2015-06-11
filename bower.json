@@ -1,6 +1,5 @@
 {
   "name": "cettia",
-  "version": "1.0.0-Alpha2",
   "main": "cettia.js",
   "ignore": [
     "node_modules",
