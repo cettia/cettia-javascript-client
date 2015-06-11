@@ -361,8 +361,6 @@
         // For internal use only
         // Establishes a connection
         self.open = function() {
-            // From null or waiting state
-            state = "preparing";
             // Resets the transport
             transport = null;
             // Cancels the scheduled connection
@@ -417,7 +415,7 @@
         events.message.order = events.open.order;
         // State transition
         self.on("connecting", function() {
-            // From preparing state
+            // From null state
             state = "connecting";
             // Final URIs to work with transport
             var candidates = util.isArray(uris) ? slice.call(uris) : [uris];
@@ -555,7 +553,7 @@
             reconnectTry = 0;
         })
         .on("close", function() {
-            // From preparing, connecting or opened state
+            // From connecting or opened state
             state = "closed";
             // Locks event whose order is lower than close event among reserved events
             events.connecting.lock();
