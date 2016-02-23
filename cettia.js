@@ -8,7 +8,7 @@
  */
 
 // Implement the Universal Module Definition (UMD) pattern 
-// see https://github.com/umdjs/umd/blob/master/returnExports.js
+// see https://github.com/umdjs/umd/blob/master/templates/returnExports.js
 (function(root, factory) {
     if (typeof define === "function" && define.amd) {
         // AMD
@@ -18,7 +18,7 @@
     } else if (typeof exports === "object") {
         // Node
         // Prepare the window object
-        var window = require("jsdom").jsdom().parentWindow;
+        var window = require("jsdom").jsdom().defaultView;
         window.WebSocket = require("ws");
         window.EventSource = require("eventsource");
         module.exports = factory(window);

@@ -23,20 +23,20 @@
     "name": "Donghwan Kim",
     "email": "flowersinthesand@gmail.com"
   },
-  "license": "Apache License, Version 2.0",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/cettia/cettia-javascript-client/issues"
   },
   "dependencies": {
-    "jsdom": "3.1.2",
-    "ws": "0.7.2",
-    "eventsource": "0.1.6"
+    "jsdom": "8.0.4",
+    "ws": "1.0.1",
+    "eventsource": "0.2.0"
   },
   "devDependencies": {
-    "cettia-protocol": "1.0.0-Alpha2",
+    "cettia-protocol": "cettia/cettia-protocol#cae58ad",
     "grunt": "0.4.5",
-    "mocha": "2.2.5",
-    "chai": "2.3.0",
-    "minimist": "1.1.1"
+    "mocha": "2.4.5",
+    "chai": "3.5.0",
+    "minimist": "1.2.0"
   }
 }
