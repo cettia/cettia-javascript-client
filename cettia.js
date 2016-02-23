@@ -1,8 +1,8 @@
 /*
- * Cettia v1.0.0-Alpha2
+ * Cettia v1.0.0-Alpha3
  * http://cettia.io/projects/cettia-javascript-client/
  * 
- * Copyright 2015 The Cettia Project
+ * Copyright 2015 the original author or authors.
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
  */
