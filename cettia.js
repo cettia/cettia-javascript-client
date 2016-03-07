@@ -1,5 +1,5 @@
 /*
- * Cettia v1.0.0-Alpha3
+ * Cettia v1.0.0-Beta1
  * http://cettia.io/projects/cettia-javascript-client/
  * 
  * Copyright 2015 the original author or authors.
