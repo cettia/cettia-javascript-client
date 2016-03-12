@@ -37,20 +37,14 @@
   var guid = 1;
   // Prototype shortcuts
   var slice = Array.prototype.slice;
-  var toString = Object.prototype.toString;
-  var hasOwn = Object.prototype.hasOwnProperty;
   // Variables for Node
   var document = window.document;
   var location = window.location;
   var navigator = window.navigator;
-  // Shortcut to find head tag
-  var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
+  var XMLHttpRequest = window.XMLHttpRequest;
 
   // Most are inspired by jQuery
   var util = {};
-  util.isArray = Array.isArray || function(array) {
-    return toString.call(array) === "[object Array]";
-  };
   util.makeAbsolute = function(url) {
     var div = document.createElement("div");
     // Uses an innerHTML property to obtain an absolute URL
@@ -93,101 +87,14 @@
     }
     return obj;
   };
-  util.createXMLHttpRequest = function() {
-    try {
-      return new window.XMLHttpRequest();
-    } catch (e1) {
-      try {
-        return new window.ActiveXObject("Microsoft.XMLHTTP");
-      } catch (e2) {
-      }
-    }
-  };
-  util.parseJSON = window.JSON ? window.JSON.parse : function(data) {
-    return Function("return " + data)();
-  };
-  // http://github.com/flowersinthesand/stringifyJSON
-  util.stringifyJSON = window.JSON ? window.JSON.stringify : function(value) {
-    var escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-      meta = {
-        '\b': '\\b',
-        '\t': '\\t',
-        '\n': '\\n',
-        '\f': '\\f',
-        '\r': '\\r',
-        '"': '\\"',
-        '\\': '\\\\'
-      };
-
-    function quote(string) {
-      return '"' + string.replace(escapable, function(a) {
-        var c = meta[a];
-        return typeof c === "string" ? c : "\\u" + ("0000" + a.charCodeAt(0).toString(16)).slice(-4);
-      }) + '"';
-    }
-
-    function f(n) {
-      return n < 10 ? "0" + n : n;
-    }
-
-    return (function str(key, holder) {
-      var i, v, len, partial, value = holder[key], type = typeof value;
-
-      if (value && typeof value === "object" && typeof value.toJSON === "function") {
-        value = value.toJSON(key);
-        type = typeof value;
-      }
-
-      switch (type) {
-        case "string":
-          return quote(value);
-        case "number":
-          return isFinite(value) ? String(value) : "null";
-        case "boolean":
-          return String(value);
-        case "object":
-          if (!value) {
-            return "null";
-          }
-
-          switch (toString.call(value)) {
-            case "[object Date]":
-              return isFinite(value.valueOf()) ? '"' + value.getUTCFullYear() + "-" +
-              f(value.getUTCMonth() + 1) + "-" + f(value.getUTCDate()) + "T" +
-              f(value.getUTCHours()) + ":" + f(value.getUTCMinutes()) + ":" +
-              f(value.getUTCSeconds()) + "Z" + '"' : "null";
-            case "[object Array]":
-              len = value.length;
-              partial = [];
-              for (i = 0; i < len; i++) {
-                partial.push(str(i, value) || "null");
-              }
-
-              return "[" + partial.join(",") + "]";
-            default:
-              partial = [];
-              for (i in value) {
-                if (hasOwn.call(value, i)) {
-                  v = str(i, value);
-                  if (v) {
-                    partial.push(quote(i) + ":" + v);
-                  }
-                }
-              }
-
-              return "{" + partial.join(",") + "}";
-          }
-      }
-    })("", {"": value});
-  };
   // CORS able
-  util.corsable = "withCredentials" in util.createXMLHttpRequest();
+  util.corsable = "withCredentials" in new XMLHttpRequest();
   // Browser sniffing
   util.browser = (function() {
     var ua = navigator.userAgent.toLowerCase();
     var browser = {};
     var match =
-      // IE 6-10
+      // IE 9-10
       /(msie) ([\w.]+)/.exec(ua) ||
         // IE 11+
       /(trident)(?:.*? rv:([\w.]+)|)/.exec(ua) ||
@@ -395,7 +302,7 @@
     // It's obstructive but inevitable
     if (options.name) {
       if (window.name) {
-        var names = util.parseJSON(window.name);
+        var names = JSON.parse(window.name);
         id = names[options.name];
       }
     }
@@ -423,7 +330,7 @@
       // From null state
       state = "connecting";
       // Final URIs to work with transport
-      var candidates = util.isArray(uris) ? slice.call(uris) : [uris];
+      var candidates = Array.isArray(uris) ? slice.call(uris) : [uris];
       for (var i = 0; i < candidates.length; i++) {
         // Attaches the id to uri
         var uri = candidates[i] = util.stringifyURI(util.makeAbsolute(candidates[i]), {sid: id});
@@ -494,7 +401,7 @@
               return;
             }
             // Inbound event
-            var event = util.parseJSON(data);
+            var event = JSON.parse(data);
             var latch;
             var reply = function(success) {
               return function(value) {
@@ -527,9 +434,9 @@
     })
     .on("new", function() {
       if (options.name) {
-        var names = window.name ? util.parseJSON(window.name) : {};
+        var names = window.name ? JSON.parse(window.name) : {};
         names[options.name] = id;
-        window.name = util.stringifyJSON(names);
+        window.name = JSON.stringify(names);
       }
     })
     .on("open", function() {
@@ -606,7 +513,7 @@
         callbacks[event.id] = [onResolved, onRejected];
       }
       // Delegates to the transport
-      transport.send(util.stringifyJSON(event));
+      transport.send(JSON.stringify(event));
       return this;
     };
     self.on("reply", function(reply) {
@@ -754,7 +661,7 @@
     var send = !util.crossOrigin(uri) || util.corsable ?
       // By XMLHttpRequest
       function(data) {
-        var xhr = util.createXMLHttpRequest();
+        var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
           if (xhr.readyState === 4) {
             if (xhr.status === 200) {
@@ -765,11 +672,7 @@
           }
         };
         xhr.open("POST", sendURI);
-        // Checks if XMLHttpRequest handles withCredentials
-        // to avoid an error of IE 6 occuring when custom attribute is set to XMLHttpRequest
-        if (util.corsable) {
-          xhr.withCredentials = true;
-        }
+        xhr.withCredentials = true;
         // data is either a string or an ArrayBuffer
         if (typeof data === "string") {
           // In XMLHttpRequest of jsdom used to provide window in Node.js,
@@ -802,8 +705,7 @@
         form.action = sendURI;
         form.target = "socket-" + (guid++);
         form.method = "POST";
-        // IE 6 needs encoding property
-        form.enctype = form.encoding = "text/plain";
+        form.enctype = "text/plain";
         form.acceptCharset = "UTF-8";
         form.style.display = "none";
         form.innerHTML = '<textarea name="data"></textarea><iframe name="' + form.target + '"></iframe>';
@@ -841,17 +743,14 @@
         var script = document.createElement("script");
         script.async = false;
         script.src = util.stringifyURI(uri, {id: self.id, when: "abort"});
-        script.onload = script.onerror = script.onreadystatechange = function() {
-          if (!script.readyState || /loaded|complete/.test(script.readyState)) {
-            script.onload = script.onreadystatechange = null;
-            if (script.parentNode) {
-              script.parentNode.removeChild(script);
-            }
-            // Fires the close event but it may be already fired by transport
-            self.fire("close");
+        script.onload = script.onerror = function() {
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
           }
+          // Fires the close event but it may be already fired by transport
+          self.fire("close");
         };
-        head.insertBefore(script, head.firstChild);
+        document.head.appendChild(script);
       }
       return this;
     };
@@ -955,7 +854,7 @@
     var self = createHttpStreamBaseTransport(uri, options);
     self.connect = function() {
       var index;
-      xhr = util.createXMLHttpRequest();
+      xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function() {
         if (xhr.readyState === 3 && xhr.status === 200) {
           self.parse(!index ? xhr.responseText : xhr.responseText.substring(index));
@@ -969,9 +868,7 @@
         }
       };
       xhr.open("GET", uri + "&when=open");
-      if (util.corsable) {
-        xhr.withCredentials = true;
-      }
+      xhr.withCredentials = true;
       xhr.send();
     };
     self.abort = function() {
@@ -1137,7 +1034,7 @@
     var xhr;
     var self = createHttpLongpollBaseTransport(uri, options);
     self.poll = function(url, fn) {
-      xhr = util.createXMLHttpRequest();
+      xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function() {
         switch (xhr.readyState) {
           // HEADERS_RECEIVED
@@ -1164,9 +1061,7 @@
         }
       };
       xhr.open("GET", url);
-      if (util.corsable) {
-        xhr.withCredentials = true;
-      }
+      xhr.withCredentials = true;
       xhr.send(null);
     };
     self.abort = function() {
@@ -1204,56 +1099,36 @@
   }
 
   var jsonpCallbacks = [];
-  // Only for IE 6, 7, 8 and 9
+  // Only for IE 9
   function createHttpLongpollJsonpTransport(uri, options) {
     var script;
     var self = createHttpLongpollBaseTransport(uri, options);
     var callback = jsonpCallbacks.pop() || ("socket_" + (guid++));
-    // Attaches callback
-    window[callback] = function(data) {
-      script.responseText = data;
-    };
     self.on("close", function() {
-      // Assings an empty function for browsers which are not able to cancel a request made from
-      // script tag
-      window[callback] = function() {
-      };
+      delete window[callback];
       jsonpCallbacks.push(callback);
     });
     self.poll = function(url, fn) {
+      window[callback] = function(data) {
+        fn(data);
+      };
       script = document.createElement("script");
       script.async = true;
       // In fact, jsonp and callback params are only for first request
       script.src = util.stringifyURI(url, {jsonp: "true", callback: callback});
-      script.clean = function() {
-        // Assigns null to attributes to avoid memory leak in IE
-        script.clean = script.onerror = script.onreadystatechange = script.responseText = null;
+      script.onload = script.onerror = function(event) {
         if (script.parentNode) {
           script.parentNode.removeChild(script);
         }
-      };
-      // onreadystatechange is supported in IE 6+
-      script.onreadystatechange = function() {
-        if (/loaded|complete/.test(script.readyState)) {
-          if (script.clean) {
-            script.clean();
-          }
-          fn(script.responseText);
-          // If the callback function is not called, the previous data would be passed to fn again
-          // To prevent it, makes it null
-          script.responseText = null;
+        if (event.type === "error") {
+          self.fire("error", new Error()).fire("close");
         }
       };
-      // onerror is supported in IE 9+
-      script.onerror = function() {
-        script.clean();
-        self.fire("error", new Error()).fire("close");
-      };
-      head.insertBefore(script, head.firstChild);
+      document.head.appendChild(script);
     };
     self.abort = function() {
-      if (script.clean) {
-        script.clean();
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
       }
     };
     return self;
