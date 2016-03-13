@@ -21,14 +21,14 @@
     var window = require("jsdom").jsdom().defaultView;
     window.WebSocket = require("ws");
     window.EventSource = require("eventsource");
+    window.msgpack = require("msgpack-lite");
+    window.traverse = require("traverse");
     module.exports = factory(window);
-    // node-XMLHttpRequest 1.x conforms XMLHttpRequest Level 1 but can perform a cross-domain
-    // request
-    module.exports.util.corsable = true;
   } else {
     // Browser globals, Window
     root.cettia = factory(root);
   }
+// It assumes that msgpack is already loaded within window if it is supposed to handle binary
 }(this, function(window) {
   // Enables ECMAScript 5's strict mode
   "use strict";
@@ -392,16 +392,9 @@
           options._heartbeat = +headers._heartbeat || 5000;
           // Now that handshaking is completed, associates the transport with the socket
           transport = testTransport.off("close", find);
-          var skip;
-          transport.on("text", function(data) {
-            // Because this handler is executed on dispatching text event,
-            // first message for handshaking should be skipped
-            if (!skip) {
-              skip = true;
-              return;
-            }
-            // Inbound event
-            var event = JSON.parse(data);
+
+          // Handles an inbound event object
+          function onevent(event) {
             var latch;
             var reply = function(success) {
               return function(value) {
@@ -417,6 +410,25 @@
               reject: reply(false)
             }];
             self.fire.apply(self, args);
+          }
+
+          var skip;
+          transport.on("text", function(data) {
+            // Because this handler is executed on dispatching text event,
+            // first message for handshaking should be skipped
+            if (!skip) {
+              skip = true;
+              return;
+            }
+            onevent(JSON.parse(data));
+          })
+          .on("binary", function(data) {
+            // In browser, data is ArrayBuffer and should be wrapped in Uint8Array
+            // In Node, data should be Buffer
+            if (typeof exports !== "object") {
+              data = new Uint8Array(data);
+            }
+            onevent(window.msgpack.decode(data));
           })
           .on("error", function(error) {
             // If the underlying connection is closed due to this error, accordingly close event
@@ -512,8 +524,32 @@
       if (event.reply) {
         callbacks[event.id] = [onResolved, onRejected];
       }
+
+      // Determines if the given data contains binary
+      var hasBinary = false;
+      if (typeof exports === "object") {
+        // Applies to Node.js only
+        hasBinary = window.traverse(data).reduce(function(hasBuffer, e) {
+          // 'ArrayBuffer' refers to window.ArrayBuffer not global.ArrayBuffer
+          return hasBuffer || Buffer.isBuffer(e) || global.ArrayBuffer.isView(e);
+        }, false);
+      } else {
+        // IE 9 doesn't support typed arrays
+        var ArrayBuffer = window.ArrayBuffer;
+        if (ArrayBuffer) {
+          JSON.stringify(data, function(key, value) {
+            hasBinary = hasBinary || ArrayBuffer.isView(value);
+            return value;
+          });
+        }
+      }
+
       // Delegates to the transport
-      transport.send(JSON.stringify(event));
+      if (hasBinary) {
+        transport.send(window.msgpack.encode(event));
+      } else {
+        transport.send(JSON.stringify(event));
+      }
       return this;
     };
     self.on("reply", function(reply) {
@@ -682,6 +718,11 @@
         } else {
           // ArrayBuffer can be sent by only XMLHttpRequest 2
           xhr.setRequestHeader("Content-Type", "application/octet-stream");
+          if (typeof exports === "object") {
+            // API for Node is supposed to send Buffer but jsdom's XMLHttpRequest doesn't
+            // support doing that so convert it to ArrayBuffer
+            data = new Uint8Array(data).buffer;
+          }
           xhr.send(data);
         }
         return this;
@@ -1014,6 +1055,11 @@
                 self.fire("text", data);
               } else {
                 // Practically this case only happens with XMLHttpRequest 2
+                if (typeof exports === "object") {
+                  // Even in Node, data is ArrayBuffer not Buffer because of jsdom
+                  // According to API for Node, binary event should receive Buffer
+                  data = new Buffer(new Uint8Array(data));
+                }
                 self.fire("binary", data);
               }
             } else {
