@@ -35,7 +35,7 @@
     "ws": "1.0.1"
   },
   "devDependencies": {
-    "cettia-protocol": "cettia/cettia-protocol#6d9ca65",
+    "cettia-protocol": "1.0.0-Beta1",
     "grunt": "0.4.5",
     "mocha": "2.4.5",
     "chai": "3.5.0",
