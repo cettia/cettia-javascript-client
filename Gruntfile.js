@@ -3,7 +3,6 @@ var http = require("http");
 var Mocha = require("mocha");
 var url = require("url");
 var cettia = require("./cettia").default;
-console.log(Object.keys(cettia));
 
 http.globalAgent.maxSockets = Infinity;
 
