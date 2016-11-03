@@ -1,1 +1,10 @@
-{ "presets": ["es2015"] }
+{
+    "env": {
+        "node": true,
+        "browser": true
+    },
+    "presets": ["babel-preset-es2015-without-strict"],
+    "plugins": [
+        "transform-node-env-inline"
+    ]
+}

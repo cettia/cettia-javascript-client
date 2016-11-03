@@ -1,4 +1,8 @@
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 /*
  * Cettia v1.0.0-Beta1
  * http://cettia.io/projects/cettia-javascript-client/
@@ -7,10 +11,19 @@
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-import msgpack from 'msgpack-lite';
-import traverse from 'traverse';
 
-if (process.env.NODE_ENV !== "browser") {
+
+var _msgpackLite = require('msgpack-lite');
+
+var _msgpackLite2 = _interopRequireDefault(_msgpackLite);
+
+var _traverse = require('traverse');
+
+var _traverse2 = _interopRequireDefault(_traverse);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+if (false) {
   window = require("jsdom").jsdom().defaultView;
   window.WebSocket = require("ws");
   window.EventSource = require("eventsource");
@@ -28,7 +41,7 @@ var XMLHttpRequest = window.XMLHttpRequest;
 
 // Most are inspired by jQuery
 var util = {};
-util.makeAbsolute = function(url) {
+util.makeAbsolute = function (url) {
   var div = document.createElement("div");
   // Uses an innerHTML property to obtain an absolute URL
   div.innerHTML = '<a href="' + url + '"/>';
@@ -36,14 +49,14 @@ util.makeAbsolute = function(url) {
   // since IE doesn't encode the href property value and return it - http://jsfiddle.net/Yq9M8/1/
   return encodeURI(decodeURI(div.firstChild.href));
 };
-util.on = function(elem, type, fn) {
+util.on = function (elem, type, fn) {
   if (elem.addEventListener) {
     elem.addEventListener(type, fn, false);
   } else if (elem.attachEvent) {
     elem.attachEvent("on" + type, fn);
   }
 };
-util.stringifyURI = function(url, params) {
+util.stringifyURI = function (url, params) {
   var name;
   var s = [];
   params = params || {};
@@ -57,7 +70,7 @@ util.stringifyURI = function(url, params) {
   }
   return url + (/\?/.test(url) ? "&" : "?") + s.join("&").replace(/%20/g, "+");
 };
-util.parseURI = function(url) {
+util.parseURI = function (url) {
   // Deal with only query part
   var obj = {
     query: {}
@@ -75,16 +88,16 @@ util.parseURI = function(url) {
 // CORS able
 util.corsable = "withCredentials" in new XMLHttpRequest();
 // Browser sniffing
-util.browser = (function() {
+util.browser = function () {
   var ua = navigator.userAgent.toLowerCase();
   var browser = {};
   var match =
-    // IE 9-10
-    /(msie) ([\w.]+)/.exec(ua) ||
-    // IE 11+
-    /(trident)(?:.*? rv:([\w.]+)|)/.exec(ua) ||
-    // Safari
-    ua.indexOf("android") < 0 && /version\/(.+) (safari)/.exec(ua) || [];
+  // IE 9-10
+  /(msie) ([\w.]+)/.exec(ua) ||
+  // IE 11+
+  /(trident)(?:.*? rv:([\w.]+)|)/.exec(ua) ||
+  // Safari
+  ua.indexOf("android") < 0 && /version\/(.+) (safari)/.exec(ua) || [];
 
   // Swaps variables
   if (match[2] === "safari") {
@@ -99,59 +112,57 @@ util.browser = (function() {
     browser.msie = true;
   }
   return browser;
-})();
-util.crossOrigin = function(uri) {
+}();
+util.crossOrigin = function (uri) {
   // Origin parts
   var parts = /^([\w\+\.\-]+:)(?:\/\/([^\/?#:]*)(?::(\d+))?)?/.exec(uri.toLowerCase());
   return !!(parts && (
-    // protocol
-    parts[1] != location.protocol ||
-    // hostname
-    parts[2] != location.hostname ||
-    // port
-    (parts[3] || (parts[1] === "http:" ? 80 : 443)) !=
-    (location.port || (location.protocol === "http:" ? 80 : 443))
-  ));
+  // protocol
+  parts[1] != location.protocol ||
+  // hostname
+  parts[2] != location.hostname ||
+  // port
+  (parts[3] || (parts[1] === "http:" ? 80 : 443)) != (location.port || (location.protocol === "http:" ? 80 : 443))));
 };
 
 // Inspired by jQuery.Callbacks
 function createCallbacks(deferred) {
-  var locked;
+  var _locked;
   var memory;
   var firing;
   var firingStart;
   var firingLength;
   var firingIndex;
   var list = [];
-  var fire = function(context, args) {
+  var _fire = function _fire(context, args) {
     args = args || [];
     memory = !deferred || [context, args];
     firing = true;
     firingIndex = firingStart || 0;
     firingStart = 0;
     firingLength = list.length;
-    for (; firingIndex < firingLength && !locked; firingIndex++) {
+    for (; firingIndex < firingLength && !_locked; firingIndex++) {
       list[firingIndex].apply(context, args);
     }
     firing = false;
   };
   var self = {
-    add: function(fn) {
+    add: function add(fn) {
       var length = list.length;
 
       list.push(fn);
       if (firing) {
         firingLength = list.length;
-      } else if (!locked && memory && memory !== true) {
+      } else if (!_locked && memory && memory !== true) {
         firingStart = length;
-        fire(memory[0], memory[1]);
+        _fire(memory[0], memory[1]);
       }
     },
-    remove: function(fn) {
+    remove: function remove(fn) {
       var i;
 
       for (i = 0; i < list.length; i++) {
-        if (fn === list[i] || (fn.guid && fn.guid === list[i].guid)) {
+        if (fn === list[i] || fn.guid && fn.guid === list[i].guid) {
           if (firing) {
             if (i <= firingLength) {
               firingLength--;
@@ -164,19 +175,19 @@ function createCallbacks(deferred) {
         }
       }
     },
-    fire: function(context, args) {
-      if (!locked && !firing && !(deferred && memory)) {
-        fire(context, args);
+    fire: function fire(context, args) {
+      if (!_locked && !firing && !(deferred && memory)) {
+        _fire(context, args);
       }
     },
-    lock: function() {
-      locked = true;
+    lock: function lock() {
+      _locked = true;
     },
-    locked: function() {
-      return !!locked;
+    locked: function locked() {
+      return !!_locked;
     },
-    unlock: function() {
-      locked = memory = firing = firingStart = firingLength = firingIndex = undefined;
+    unlock: function unlock() {
+      _locked = memory = firing = firingStart = firingLength = firingIndex = undefined;
     }
   };
 
@@ -187,7 +198,7 @@ function createCallbacks(deferred) {
 function createSocket(uris, options) {
   // Default socket options
   var defaults = {
-    reconnect: function(lastDelay) {
+    reconnect: function reconnect(lastDelay) {
       return 2 * (lastDelay || 250);
     },
     transports: [createWebSocketTransport, createHttpStreamTransport, createHttpLongpollTransport]
@@ -205,7 +216,7 @@ function createSocket(uris, options) {
   // Events
   var events = {};
   // Adds event handler
-  self.on = function(type, fn) {
+  self.on = function (type, fn) {
     var event;
     // For custom event
     event = events[type];
@@ -220,7 +231,7 @@ function createSocket(uris, options) {
     return this;
   };
   // Removes event handler
-  self.off = function(type, fn) {
+  self.off = function (type, fn) {
     var event = events[type];
     if (event) {
       event.remove(fn);
@@ -228,7 +239,7 @@ function createSocket(uris, options) {
     return this;
   };
   // Adds one time event handler
-  self.once = function(type, fn) {
+  self.once = function (type, fn) {
     function proxy() {
       self.off(type, proxy);
       fn.apply(self, arguments);
@@ -239,7 +250,7 @@ function createSocket(uris, options) {
     return self.on(type, proxy);
   };
   // Fires event handlers
-  self.fire = function(type) {
+  self.fire = function (type) {
     var event = events[type];
     if (event) {
       event.fire(self, slice.call(arguments, 1));
@@ -256,7 +267,7 @@ function createSocket(uris, options) {
   var reconnectTry = 0;
   // For internal use only
   // Establishes a connection
-  self.open = function() {
+  self.open = function () {
     // Resets the transport
     transport = null;
     // Cancels the scheduled connection
@@ -268,7 +279,7 @@ function createSocket(uris, options) {
     return self.fire("connecting");
   };
   // Disconnects the connection
-  self.close = function() {
+  self.close = function () {
     // Prevents reconnection
     options.reconnect = false;
     clearTimeout(reconnectTimer);
@@ -293,17 +304,17 @@ function createSocket(uris, options) {
   }
   // State
   var state;
-  self.state = function() {
+  self.state = function () {
     return state;
   };
   // Each event represents a possible state of this socket
   // they are considered as special event and works in a different way
   for (var i in {
-      connecting: 1,
-      open: 1,
-      close: 1,
-      waiting: 1
-    }) {
+    connecting: 1,
+    open: 1,
+    close: 1,
+    waiting: 1
+  }) {
     // This event fires only one time and handlers being added after fire are fired immediately
     events[i] = createCallbacks(true);
     // State transition order
@@ -316,204 +327,193 @@ function createSocket(uris, options) {
   // opened state
   events.message.order = events.open.order;
   // State transition
-  self.on("connecting", function() {
-      // From null state
-      state = "connecting";
-      // Final URIs to work with transport
-      var candidates = Array.isArray(uris) ? slice.call(uris) : [uris];
-      for (var i = 0; i < candidates.length; i++) {
-        // Attaches the id to uri
-        var uri = candidates[i] = util.stringifyURI(util.makeAbsolute(candidates[i]), {
-          sid: id
-        });
-        // Translates an abbreviated uri
-        if (/^https?:/.test(uri) && !util.parseURI(uri).query.transport) {
-          candidates.splice(i, 1,
-            uri.replace(/^http/, "ws"),
-            // util.stringifyURI is used since we don't know if uri has already query
-            util.stringifyURI(uri, {
-              transport: "stream"
-            }),
-            util.stringifyURI(uri, {
-              transport: "longpoll"
-            }));
-          i = i + 2;
-        }
-      }
-      // Finds a working transport
-      (function find() {
-        var uri = candidates.shift();
-        // If every available transport failed
-        if (!uri) {
-          self.fire("error", new Error())
-            // Fires the close event instead of executing close method which destorys the socket
-            .fire("close");
-          return;
-        }
-        // Deremines a transport from URI through transports option
-        var testTransport;
-        for (var i = 0; i < options.transports.length; i++) {
-          testTransport = options.transports[i](uri, options);
-          if (testTransport) {
-            break;
-          }
-        }
-        // It would be null if it can't run on this environment or handle given URI
-        if (!testTransport) {
-          find();
-          return;
-        }
-        // This is to stop the whole process to find a working transport
-        // when socket's close method is called while doing that
-        function stop() {
-          testTransport.off("close", find).close();
-        }
-
-        self.once("close", stop);
-        testTransport.on("close", find).on("close", function() {
-            self.off("close", stop);
-          })
-          .on("text", function handshaker(data) {
-            // handshaker is one-time event handler
-            testTransport.off("text", handshaker);
-            var headers = util.parseURI(data).query;
-            // An issued id
-            if (id !== headers.sid) {
-              id = headers.sid;
-              self.fire("new");
-            }
-            // An heartbeat option can't be set by user
-            options.heartbeat = +headers.heartbeat;
-            // To speed up heartbeat test
-            options._heartbeat = +headers._heartbeat || 5000;
-            // Now that handshaking is completed, associates the transport with the socket
-            transport = testTransport.off("close", find);
-
-            // Handles an inbound event object
-            function onevent(event) {
-              var latch;
-              var reply = function(success) {
-                return function(value) {
-                  // The latch prevents double reply.
-                  if (!latch) {
-                    latch = true;
-                    self.send("reply", {
-                      id: event.id,
-                      data: value,
-                      exception: !success
-                    });
-                  }
-                };
-              };
-              var args = [event.type, event.data, !event.reply ? null : {
-                resolve: reply(true),
-                reject: reply(false)
-              }];
-              self.fire.apply(self, args);
-            }
-
-            var skip;
-            transport.on("text", function(data) {
-                // Because this handler is executed on dispatching text event,
-                // first message for handshaking should be skipped
-                if (!skip) {
-                  skip = true;
-                  return;
-                }
-                onevent(JSON.parse(data));
-              })
-              .on("binary", function(data) {
-                // In browser, data is ArrayBuffer and should be wrapped in Uint8Array
-                // In Node, data should be Buffer
-                if (typeof exports !== "object") {
-                  data = new Uint8Array(data);
-                }
-                onevent(msgpack.decode(data));
-              })
-              .on("error", function(error) {
-                // If the underlying connection is closed due to this error, accordingly close event
-                // will be triggered
-                self.fire("error", error);
-              })
-              .on("close", function() {
-                self.fire("close");
-              });
-            // And fires open event to socket
-            self.off("close", stop).fire("open");
-          })
-          .open();
-      })();
-    })
-    .on("new", function() {
-      if (options.name) {
-        var names = window.name ? JSON.parse(window.name) : {};
-        names[options.name] = id;
-        window.name = JSON.stringify(names);
-      }
-    })
-    .on("open", function() {
-      // From connecting state
-      state = "opened";
-      var heartbeatTimer;
-      // Sets a heartbeat timer and clears it on close event
-      (function setHeartbeatTimer() {
-        // heartbeat event will be sent after options.heartbeat - options._heartbeat ms
-        heartbeatTimer = setTimeout(function() {
-          self.send("heartbeat").once("heartbeat", function() {
-            clearTimeout(heartbeatTimer);
-            setHeartbeatTimer();
-          });
-          // transport will be closed after options._heartbeat ms unless the server responds it
-          heartbeatTimer = setTimeout(function() {
-            self.fire("error", new Error("heartbeat"));
-            // Now that the transport doesn't realize its connection is closed, execute close method
-            // It will also fire close event to transport and accordingly socket
-            transport.close();
-          }, options._heartbeat);
-        }, options.heartbeat - options._heartbeat);
-      })();
-      self.once("close", function() {
-        clearTimeout(heartbeatTimer);
+  self.on("connecting", function () {
+    // From null state
+    state = "connecting";
+    // Final URIs to work with transport
+    var candidates = Array.isArray(uris) ? slice.call(uris) : [uris];
+    for (var i = 0; i < candidates.length; i++) {
+      // Attaches the id to uri
+      var uri = candidates[i] = util.stringifyURI(util.makeAbsolute(candidates[i]), {
+        sid: id
       });
-      // Locks the connecting event
-      events.connecting.lock();
-      // Initializes variables related with reconnection
-      reconnectTimer = reconnectDelay = null;
-      reconnectTry = 0;
-    })
-    .on("close", function() {
-      // From connecting or opened state
-      state = "closed";
-      // Locks event whose order is lower than close event among reserved events
-      events.connecting.lock();
-      events.open.lock();
-
-      // Schedules reconnection
-      if (options.reconnect) {
-        // By adding a handler by one method in event handling
-        // it will be the last one of close event handlers having been added
-        self.once("close", function() {
-          reconnectDelay = options.reconnect.call(self, reconnectDelay, reconnectTry);
-          if (reconnectDelay !== false) {
-            reconnectTry++;
-            reconnectTimer = setTimeout(function() {
-              self.open();
-            }, reconnectDelay);
-            self.fire("waiting", reconnectDelay, reconnectTry);
-          }
-        });
+      // Translates an abbreviated uri
+      if (/^https?:/.test(uri) && !util.parseURI(uri).query.transport) {
+        candidates.splice(i, 1, uri.replace(/^http/, "ws"),
+        // util.stringifyURI is used since we don't know if uri has already query
+        util.stringifyURI(uri, {
+          transport: "stream"
+        }), util.stringifyURI(uri, {
+          transport: "longpoll"
+        }));
+        i = i + 2;
       }
-    })
-    .on("waiting", function() {
-      // From closed state
-      state = "waiting";
+    }
+    // Finds a working transport
+    (function find() {
+      var uri = candidates.shift();
+      // If every available transport failed
+      if (!uri) {
+        self.fire("error", new Error())
+        // Fires the close event instead of executing close method which destorys the socket
+        .fire("close");
+        return;
+      }
+      // Deremines a transport from URI through transports option
+      var testTransport;
+      for (var i = 0; i < options.transports.length; i++) {
+        testTransport = options.transports[i](uri, options);
+        if (testTransport) {
+          break;
+        }
+      }
+      // It would be null if it can't run on this environment or handle given URI
+      if (!testTransport) {
+        find();
+        return;
+      }
+      // This is to stop the whole process to find a working transport
+      // when socket's close method is called while doing that
+      function stop() {
+        testTransport.off("close", find).close();
+      }
+
+      self.once("close", stop);
+      testTransport.on("close", find).on("close", function () {
+        self.off("close", stop);
+      }).on("text", function handshaker(data) {
+        // handshaker is one-time event handler
+        testTransport.off("text", handshaker);
+        var headers = util.parseURI(data).query;
+        // An issued id
+        if (id !== headers.sid) {
+          id = headers.sid;
+          self.fire("new");
+        }
+        // An heartbeat option can't be set by user
+        options.heartbeat = +headers.heartbeat;
+        // To speed up heartbeat test
+        options._heartbeat = +headers._heartbeat || 5000;
+        // Now that handshaking is completed, associates the transport with the socket
+        transport = testTransport.off("close", find);
+
+        // Handles an inbound event object
+        function onevent(event) {
+          var latch;
+          var reply = function reply(success) {
+            return function (value) {
+              // The latch prevents double reply.
+              if (!latch) {
+                latch = true;
+                self.send("reply", {
+                  id: event.id,
+                  data: value,
+                  exception: !success
+                });
+              }
+            };
+          };
+          var args = [event.type, event.data, !event.reply ? null : {
+            resolve: reply(true),
+            reject: reply(false)
+          }];
+          self.fire.apply(self, args);
+        }
+
+        var skip;
+        transport.on("text", function (data) {
+          // Because this handler is executed on dispatching text event,
+          // first message for handshaking should be skipped
+          if (!skip) {
+            skip = true;
+            return;
+          }
+          onevent(JSON.parse(data));
+        }).on("binary", function (data) {
+          // In browser, data is ArrayBuffer and should be wrapped in Uint8Array
+          // In Node, data should be Buffer
+          if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) !== "object") {
+            data = new Uint8Array(data);
+          }
+          onevent(_msgpackLite2.default.decode(data));
+        }).on("error", function (error) {
+          // If the underlying connection is closed due to this error, accordingly close event
+          // will be triggered
+          self.fire("error", error);
+        }).on("close", function () {
+          self.fire("close");
+        });
+        // And fires open event to socket
+        self.off("close", stop).fire("open");
+      }).open();
+    })();
+  }).on("new", function () {
+    if (options.name) {
+      var names = window.name ? JSON.parse(window.name) : {};
+      names[options.name] = id;
+      window.name = JSON.stringify(names);
+    }
+  }).on("open", function () {
+    // From connecting state
+    state = "opened";
+    var heartbeatTimer;
+    // Sets a heartbeat timer and clears it on close event
+    (function setHeartbeatTimer() {
+      // heartbeat event will be sent after options.heartbeat - options._heartbeat ms
+      heartbeatTimer = setTimeout(function () {
+        self.send("heartbeat").once("heartbeat", function () {
+          clearTimeout(heartbeatTimer);
+          setHeartbeatTimer();
+        });
+        // transport will be closed after options._heartbeat ms unless the server responds it
+        heartbeatTimer = setTimeout(function () {
+          self.fire("error", new Error("heartbeat"));
+          // Now that the transport doesn't realize its connection is closed, execute close method
+          // It will also fire close event to transport and accordingly socket
+          transport.close();
+        }, options._heartbeat);
+      }, options.heartbeat - options._heartbeat);
+    })();
+    self.once("close", function () {
+      clearTimeout(heartbeatTimer);
     });
+    // Locks the connecting event
+    events.connecting.lock();
+    // Initializes variables related with reconnection
+    reconnectTimer = reconnectDelay = null;
+    reconnectTry = 0;
+  }).on("close", function () {
+    // From connecting or opened state
+    state = "closed";
+    // Locks event whose order is lower than close event among reserved events
+    events.connecting.lock();
+    events.open.lock();
+
+    // Schedules reconnection
+    if (options.reconnect) {
+      // By adding a handler by one method in event handling
+      // it will be the last one of close event handlers having been added
+      self.once("close", function () {
+        reconnectDelay = options.reconnect.call(self, reconnectDelay, reconnectTry);
+        if (reconnectDelay !== false) {
+          reconnectTry++;
+          reconnectTimer = setTimeout(function () {
+            self.open();
+          }, reconnectDelay);
+          self.fire("waiting", reconnectDelay, reconnectTry);
+        }
+      });
+    }
+  }).on("waiting", function () {
+    // From closed state
+    state = "waiting";
+  });
 
   // Messaging
   // A map for reply callback
   var callbacks = {};
   // Sends an event to the server via the connection
-  self.send = function(type, data, onResolved, onRejected) {
+  self.send = function (type, data, onResolved, onRejected) {
     if (state !== "opened") {
       self.fire("cache", [type, data, onResolved, onRejected]);
       return this;
@@ -532,9 +532,9 @@ function createSocket(uris, options) {
 
     // Determines if the given data contains binary
     var hasBinary = false;
-    if (typeof exports === "object") {
+    if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === "object") {
       // Applies to Node.js only
-      hasBinary = traverse(data).reduce(function(hasBuffer, e) {
+      hasBinary = (0, _traverse2.default)(data).reduce(function (hasBuffer, e) {
         // 'ArrayBuffer' refers to window.ArrayBuffer not global.ArrayBuffer
         return hasBuffer || Buffer.isBuffer(e) || global.ArrayBuffer.isView(e);
       }, false);
@@ -542,7 +542,7 @@ function createSocket(uris, options) {
       // IE 9 doesn't support typed arrays
       var ArrayBuffer = window.ArrayBuffer;
       if (ArrayBuffer) {
-        JSON.stringify(data, function(key, value) {
+        JSON.stringify(data, function (key, value) {
           hasBinary = hasBinary || ArrayBuffer.isView(value);
           return value;
         });
@@ -551,13 +551,13 @@ function createSocket(uris, options) {
 
     // Delegates to the transport
     if (hasBinary) {
-      transport.send(msgpack.encode(event));
+      transport.send(_msgpackLite2.default.encode(event));
     } else {
       transport.send(JSON.stringify(event));
     }
     return this;
   };
-  self.on("reply", function(reply) {
+  self.on("reply", function (reply) {
     // callbacks[reply.id] is [onResolved, onRejected]
     // FYI +false and +true is 0 and 1, respectively
     callbacks[reply.id][+reply.exception].call(self, reply.data);
@@ -569,14 +569,14 @@ function createSocket(uris, options) {
 function createBaseTransport(uri, options) {
   var timeout = options && options.timeout || 3000;
   var self = {};
-  self.open = function() {
+  self.open = function () {
     // Establishes a real connection
     self.connect();
     // Sets a timeout timer and clear it on open or close event
-    var timeoutTimer = setTimeout(function() {
+    var timeoutTimer = setTimeout(function () {
       self.fire("error", new Error("timeout"))
-        // To abort connection
-        .close();
+      // To abort connection
+      .close();
     }, timeout);
 
     function clearTimeoutTimer() {
@@ -594,23 +594,23 @@ function createBaseTransport(uri, options) {
     error: createCallbacks(),
     close: createCallbacks(true)
   };
-  self.on = function(type, fn) {
+  self.on = function (type, fn) {
     events[type].add(fn);
     return this;
   };
-  self.off = function(type, fn) {
+  self.off = function (type, fn) {
     events[type].remove(fn);
     return this;
   };
-  self.fire = function(type) {
+  self.fire = function (type) {
     events[type].fire(self, slice.call(arguments, 1));
     return this;
   };
   var opened = false;
-  self.on("open", function() {
+  self.on("open", function () {
     opened = true;
   });
-  self.on("close", function() {
+  self.on("close", function () {
     opened = false;
     // Locks every event except close event
     for (var type in events) {
@@ -619,7 +619,7 @@ function createBaseTransport(uri, options) {
       }
     }
   });
-  self.send = function(data) {
+  self.send = function (data) {
     if (opened) {
       self.write(data);
     } else {
@@ -637,14 +637,14 @@ function createWebSocketTransport(uri, options) {
   }
   var ws;
   var self = createBaseTransport(uri, options);
-  self.connect = function() {
+  self.connect = function () {
     ws = new WebSocket(uri);
     // Reads binary frame as ArrayBuffer
     ws.binaryType = "arraybuffer";
-    ws.onopen = function() {
+    ws.onopen = function () {
       self.fire("open");
     };
-    ws.onmessage = function(event) {
+    ws.onmessage = function (event) {
       if (typeof event.data === "string") {
         self.fire("text", event.data);
       } else {
@@ -652,18 +652,18 @@ function createWebSocketTransport(uri, options) {
         self.fire("binary", event.data);
       }
     };
-    ws.onerror = function() {
+    ws.onerror = function () {
       // In some browsers, if onerror is called, onclose is not called.
       self.fire("error", new Error()).fire("close");
     };
-    ws.onclose = function() {
+    ws.onclose = function () {
       self.fire("close");
     };
   };
-  self.write = function(data) {
+  self.write = function (data) {
     ws.send(data);
   };
-  self.close = function() {
+  self.close = function () {
     ws.close();
     return this;
   };
@@ -675,24 +675,23 @@ function createHttpBaseTransport(uri, options) {
   var self = createBaseTransport(uri, options);
   // Because id is set on open event
   var sendURI;
-  self.on("open", function() {
-      sendURI = util.stringifyURI(uri, {
-        id: self.id
-      });
-    })
-    .on("close", function() {
-      sendURI = null;
+  self.on("open", function () {
+    sendURI = util.stringifyURI(uri, {
+      id: self.id
     });
+  }).on("close", function () {
+    sendURI = null;
+  });
   var sending = false;
   var queue = [];
-  var onload = function() {
+  var onload = function onload() {
     if (queue.length) {
       send(queue.shift());
     } else {
       sending = false;
     }
   };
-  var onerror = function() {
+  var onerror = function onerror() {
     // Even though it fails to send a message, the connection may turn out to be opened
     if (sendURI) {
       // However it's likely that the connection was closed but the transport couldn't detect it
@@ -702,76 +701,76 @@ function createHttpBaseTransport(uri, options) {
     }
   };
   var send = !util.crossOrigin(uri) || util.corsable ?
-    // By XMLHttpRequest
-    function(data) {
-      var xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            onload();
-          } else {
-            onerror();
-          }
+  // By XMLHttpRequest
+  function (data) {
+    var xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          onload();
+        } else {
+          onerror();
         }
-      };
-      xhr.open("POST", sendURI);
-      xhr.withCredentials = true;
-      // data is either a string or an ArrayBuffer
-      if (typeof data === "string") {
-        // In XMLHttpRequest of jsdom used to provide window in Node.js,
-        // request headers are case sensitive and it checks content-type header by 'Content-Type'
-        xhr.setRequestHeader("Content-Type", "text/plain; charset=UTF-8");
-        xhr.send("data=" + data);
-      } else {
-        // ArrayBuffer can be sent by only XMLHttpRequest 2
-        xhr.setRequestHeader("Content-Type", "application/octet-stream");
-        if (typeof exports === "object") {
-          // API for Node is supposed to send Buffer but jsdom's XMLHttpRequest doesn't
-          // support doing that so convert it to ArrayBuffer
-          data = new Uint8Array(data).buffer;
-        }
-        xhr.send(data);
       }
-      return this;
-    } : window.XDomainRequest && xdrURL ?
-    // By XDomainRequest
-    function(data) {
-      // Only text/plain is supported for the request's Content-Type header from the fourth at
-      // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
-      var xdr = new window.XDomainRequest();
-      xdr.onload = onload;
-      xdr.onerror = onerror;
-      xdr.open("POST", xdrURL.call(self, sendURI));
-      xdr.send("data=" + data);
-      return this;
-    } :
-    // By HTMLFormElement
-    function(data) {
-      var iframe;
-      var textarea;
-      var form = document.createElement("form");
-      form.action = sendURI;
-      form.target = "socket-" + (guid++);
-      form.method = "POST";
-      form.enctype = "text/plain";
-      form.acceptCharset = "UTF-8";
-      form.style.display = "none";
-      form.innerHTML = '<textarea name="data"></textarea><iframe name="' + form.target + '"></iframe>';
-      textarea = form.firstChild;
-      textarea.value = data;
-      iframe = form.lastChild;
-      util.on(iframe, "error", function() {
-        onerror();
-      });
-      util.on(iframe, "load", function() {
-        document.body.removeChild(form);
-        onload();
-      });
-      document.body.appendChild(form);
-      form.submit();
-      return this;
     };
-  self.write = function(data) {
+    xhr.open("POST", sendURI);
+    xhr.withCredentials = true;
+    // data is either a string or an ArrayBuffer
+    if (typeof data === "string") {
+      // In XMLHttpRequest of jsdom used to provide window in Node.js,
+      // request headers are case sensitive and it checks content-type header by 'Content-Type'
+      xhr.setRequestHeader("Content-Type", "text/plain; charset=UTF-8");
+      xhr.send("data=" + data);
+    } else {
+      // ArrayBuffer can be sent by only XMLHttpRequest 2
+      xhr.setRequestHeader("Content-Type", "application/octet-stream");
+      if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === "object") {
+        // API for Node is supposed to send Buffer but jsdom's XMLHttpRequest doesn't
+        // support doing that so convert it to ArrayBuffer
+        data = new Uint8Array(data).buffer;
+      }
+      xhr.send(data);
+    }
+    return this;
+  } : window.XDomainRequest && xdrURL ?
+  // By XDomainRequest
+  function (data) {
+    // Only text/plain is supported for the request's Content-Type header from the fourth at
+    // http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+    var xdr = new window.XDomainRequest();
+    xdr.onload = onload;
+    xdr.onerror = onerror;
+    xdr.open("POST", xdrURL.call(self, sendURI));
+    xdr.send("data=" + data);
+    return this;
+  } :
+  // By HTMLFormElement
+  function (data) {
+    var iframe;
+    var textarea;
+    var form = document.createElement("form");
+    form.action = sendURI;
+    form.target = "socket-" + guid++;
+    form.method = "POST";
+    form.enctype = "text/plain";
+    form.acceptCharset = "UTF-8";
+    form.style.display = "none";
+    form.innerHTML = '<textarea name="data"></textarea><iframe name="' + form.target + '"></iframe>';
+    textarea = form.firstChild;
+    textarea.value = data;
+    iframe = form.lastChild;
+    util.on(iframe, "error", function () {
+      onerror();
+    });
+    util.on(iframe, "load", function () {
+      document.body.removeChild(form);
+      onload();
+    });
+    document.body.appendChild(form);
+    form.submit();
+    return this;
+  };
+  self.write = function (data) {
     if (!sending) {
       sending = true;
       send(data);
@@ -781,7 +780,7 @@ function createHttpBaseTransport(uri, options) {
   };
   // To notify server only once
   var latch;
-  self.close = function() {
+  self.close = function () {
     // Aborts the real connection
     self.abort();
     if (!latch) {
@@ -794,7 +793,7 @@ function createHttpBaseTransport(uri, options) {
         id: self.id,
         when: "abort"
       });
-      script.onload = script.onerror = function() {
+      script.onload = script.onerror = function () {
         if (script.parentNode) {
           script.parentNode.removeChild(script);
         }
@@ -810,10 +809,7 @@ function createHttpBaseTransport(uri, options) {
 
 function createHttpStreamTransport(uri, options) {
   if (/^https?:/.test(uri) && util.parseURI(uri).query.transport === "stream") {
-    return createHttpSseTransport(uri, options) ||
-      createHttpStreamXhrTransport(uri, options) ||
-      createHttpStreamXdrTransport(uri, options) ||
-      createHttpStreamIframeTransport(uri, options);
+    return createHttpSseTransport(uri, options) || createHttpStreamXhrTransport(uri, options) || createHttpStreamXdrTransport(uri, options) || createHttpStreamIframeTransport(uri, options);
   }
 }
 
@@ -821,7 +817,7 @@ function createHttpStreamBaseTransport(uri, options) {
   var buffer = "";
   var self = createHttpBaseTransport(uri, options);
   // The detail about parsing is explained in the reference implementation
-  self.parse = function(chunk) {
+  self.parse = function (chunk) {
     // Strips off the left padding of the chunk that appears in the
     // first chunk
     chunk = chunk.replace(/^\s+/, "");
@@ -836,7 +832,7 @@ function createHttpStreamBaseTransport(uri, options) {
     }
   };
   var handshaked;
-  self.onmessage = function(data) {
+  self.onmessage = function (data) {
     // The first message is handshake result
     if (!handshaked) {
       handshaked = true;
@@ -853,7 +849,7 @@ function createHttpStreamBaseTransport(uri, options) {
           break;
         case "2":
           // The same condition used in UMD
-          if (typeof exports === "object") {
+          if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === "object") {
             data = new Buffer(data, "base64");
           } else {
             // Decodes Base64 encoded string
@@ -875,40 +871,40 @@ function createHttpStreamBaseTransport(uri, options) {
 
 function createHttpSseTransport(uri, options) {
   var EventSource = window.EventSource;
-  if (!EventSource || (util.crossOrigin(uri) && util.browser.safari && util.browser.vmajor < 7)) {
+  if (!EventSource || util.crossOrigin(uri) && util.browser.safari && util.browser.vmajor < 7) {
     return;
   }
   var es;
   var self = createHttpStreamBaseTransport(uri, options);
-  self.connect = function() {
+  self.connect = function () {
     es = new EventSource(uri + "&when=open&sse=true", {
       withCredentials: true
     });
-    es.onmessage = function(event) {
+    es.onmessage = function (event) {
       self.onmessage(event.data);
     };
-    es.onerror = function() {
+    es.onerror = function () {
       es.close();
       // There is no way to find whether there was an error or not
       self.fire("close");
     };
   };
-  self.abort = function() {
+  self.abort = function () {
     es.close();
   };
   return self;
 }
 
 function createHttpStreamXhrTransport(uri, options) {
-  if ((util.browser.msie && util.browser.vmajor < 10) || (util.crossOrigin(uri) && !util.corsable)) {
+  if (util.browser.msie && util.browser.vmajor < 10 || util.crossOrigin(uri) && !util.corsable) {
     return;
   }
   var xhr;
   var self = createHttpStreamBaseTransport(uri, options);
-  self.connect = function() {
+  self.connect = function () {
     var index;
     xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
       if (xhr.readyState === 3 && xhr.status === 200) {
         self.parse(!index ? xhr.responseText : xhr.responseText.substring(index));
         index = xhr.responseText.length;
@@ -924,7 +920,7 @@ function createHttpStreamXhrTransport(uri, options) {
     xhr.withCredentials = true;
     xhr.send();
   };
-  self.abort = function() {
+  self.abort = function () {
     xhr.abort();
   };
   return self;
@@ -938,25 +934,25 @@ function createHttpStreamXdrTransport(uri, options) {
   }
   var xdr;
   var self = createHttpStreamBaseTransport(uri, options);
-  self.connect = function() {
+  self.connect = function () {
     var index;
     xdr = new XDomainRequest();
-    xdr.onprogress = function() {
+    xdr.onprogress = function () {
       self.parse(!index ? xdr.responseText : xdr.responseText.substring(index));
       index = xdr.responseText.length;
     };
-    xdr.onerror = function() {
+    xdr.onerror = function () {
       // Here the connection is already closed
       // But onload isn't executed if onerror is executed so fires close event
       self.fire("error", new Error()).fire("close");
     };
-    xdr.onload = function() {
+    xdr.onload = function () {
       self.fire("close");
     };
     xdr.open("GET", xdrURL.call(self, uri + "&when=open"));
     xdr.send();
   };
-  self.abort = function() {
+  self.abort = function () {
     xdr.abort();
   };
   return self;
@@ -970,21 +966,21 @@ function createHttpStreamIframeTransport(uri, options) {
   var doc;
   var stop;
   var self = createHttpStreamBaseTransport(uri, options);
-  self.connect = function() {
+  self.connect = function () {
     function iterate(fn) {
       var timeoutId;
       // Though the interval is 1ms for real-time application, there is a delay between
       // setTimeout calls For detail, see
       // https://developer.mozilla.org/en/window.setTimeout#Minimum_delay_and_timeout_nesting
       (function loop() {
-        timeoutId = setTimeout(function() {
+        timeoutId = setTimeout(function () {
           if (fn() === false) {
             return;
           }
           loop();
         }, 1);
       })();
-      return function() {
+      return function () {
         clearTimeout(timeoutId);
       };
     }
@@ -996,7 +992,7 @@ function createHttpStreamIframeTransport(uri, options) {
     iframe.src = uri + "&when=open";
     doc.body.appendChild(iframe);
     var cdoc = iframe.contentDocument || iframe.contentWindow.document;
-    stop = iterate(function() {
+    stop = iterate(function () {
       // Waits the server's container ignorantly
       if (!cdoc.firstChild) {
         return;
@@ -1024,7 +1020,7 @@ function createHttpStreamIframeTransport(uri, options) {
       self.parse(readDirty());
       // The container is resetable so no index or length variable is needed
       container.innerText = "";
-      stop = iterate(function() {
+      stop = iterate(function () {
         var text = readDirty();
         if (text) {
           container.innerText = "";
@@ -1038,7 +1034,7 @@ function createHttpStreamIframeTransport(uri, options) {
       return false;
     });
   };
-  self.abort = function() {
+  self.abort = function () {
     stop();
     doc.execCommand("Stop");
   };
@@ -1047,16 +1043,14 @@ function createHttpStreamIframeTransport(uri, options) {
 
 function createHttpLongpollTransport(uri, options) {
   if (/^https?:/.test(uri) && util.parseURI(uri).query.transport === "longpoll") {
-    return createHttpLongpollAjaxTransport(uri, options) ||
-      createHttpLongpollXdrTransport(uri, options) ||
-      createHttpLongpollJsonpTransport(uri, options);
+    return createHttpLongpollAjaxTransport(uri, options) || createHttpLongpollXdrTransport(uri, options) || createHttpLongpollJsonpTransport(uri, options);
   }
 }
 
 function createHttpLongpollBaseTransport(uri, options) {
   var self = createHttpBaseTransport(uri, options);
-  self.connect = function() {
-    self.poll(uri + "&when=open", function(data) {
+  self.connect = function () {
+    self.poll(uri + "&when=open", function (data) {
       var query = util.parseURI(data).query;
       // Assign a newly issued identifier for this transport
       self.id = query.id;
@@ -1064,14 +1058,14 @@ function createHttpLongpollBaseTransport(uri, options) {
         self.poll(util.stringifyURI(uri, {
           id: self.id,
           when: "poll"
-        }), function(data) {
+        }), function (data) {
           if (data) {
             poll();
             if (typeof data === "string") {
               self.fire("text", data);
             } else {
               // Practically this case only happens with XMLHttpRequest 2
-              if (typeof exports === "object") {
+              if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === "object") {
                 // Even in Node, data is ArrayBuffer not Buffer because of jsdom
                 // According to API for Node, binary event should receive Buffer
                 data = new Buffer(new Uint8Array(data));
@@ -1095,9 +1089,9 @@ function createHttpLongpollAjaxTransport(uri, options) {
   }
   var xhr;
   var self = createHttpLongpollBaseTransport(uri, options);
-  self.poll = function(url, fn) {
+  self.poll = function (url, fn) {
     xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
       switch (xhr.readyState) {
         // HEADERS_RECEIVED
         // To set xhr.responseType which can't be set on LOADING and DONE state
@@ -1109,8 +1103,8 @@ function createHttpLongpollAjaxTransport(uri, options) {
             xhr.responseType = "arraybuffer";
           }
           break;
-          // DONE
-          // To avoid c00c023f error on IE 9
+        // DONE
+        // To avoid c00c023f error on IE 9
         case 4:
           if (xhr.status === 200) {
             // xhr.response follows the type specified by xhr.responseType
@@ -1126,7 +1120,7 @@ function createHttpLongpollAjaxTransport(uri, options) {
     xhr.withCredentials = true;
     xhr.send(null);
   };
-  self.abort = function() {
+  self.abort = function () {
     xhr.abort();
   };
   return self;
@@ -1140,13 +1134,13 @@ function createHttpLongpollXdrTransport(uri, options) {
   }
   var xdr;
   var self = createHttpLongpollBaseTransport(uri, options);
-  self.poll = function(url, fn) {
+  self.poll = function (url, fn) {
     url = xdrURL.call(self, url);
     xdr = new XDomainRequest();
-    xdr.onload = function() {
+    xdr.onload = function () {
       fn(xdr.responseText);
     };
-    xdr.onerror = function() {
+    xdr.onerror = function () {
       // Since if onerror is called, onload is not called,
       // fn which triggers poll request is also not called and the connection ends here
       self.fire("error", new Error()).fire("close");
@@ -1154,7 +1148,7 @@ function createHttpLongpollXdrTransport(uri, options) {
     xdr.open("GET", url);
     xdr.send();
   };
-  self.abort = function() {
+  self.abort = function () {
     xdr.abort();
   };
   return self;
@@ -1165,13 +1159,13 @@ var jsonpCallbacks = [];
 function createHttpLongpollJsonpTransport(uri, options) {
   var script;
   var self = createHttpLongpollBaseTransport(uri, options);
-  var callback = jsonpCallbacks.pop() || ("socket_" + (guid++));
-  self.on("close", function() {
+  var callback = jsonpCallbacks.pop() || "socket_" + guid++;
+  self.on("close", function () {
     delete window[callback];
     jsonpCallbacks.push(callback);
   });
-  self.poll = function(url, fn) {
-    window[callback] = function(data) {
+  self.poll = function (url, fn) {
+    window[callback] = function (data) {
       fn(data);
     };
     script = document.createElement("script");
@@ -1181,7 +1175,7 @@ function createHttpLongpollJsonpTransport(uri, options) {
       jsonp: "true",
       callback: callback
     });
-    script.onload = script.onerror = function(event) {
+    script.onload = script.onerror = function (event) {
       if (script.parentNode) {
         script.parentNode.removeChild(script);
       }
@@ -1191,7 +1185,7 @@ function createHttpLongpollJsonpTransport(uri, options) {
     };
     document.head.appendChild(script);
   };
-  self.abort = function() {
+  self.abort = function () {
     if (script.parentNode) {
       script.parentNode.removeChild(script);
     }
@@ -1202,7 +1196,7 @@ function createHttpLongpollJsonpTransport(uri, options) {
 // Socket instances
 var sockets = [];
 // For browser environment
-util.on(window, "unload", function() {
+util.on(window, "unload", function () {
   var socket;
   for (var i = 0; i < sockets.length; i++) {
     socket = sockets[i];
@@ -1212,7 +1206,7 @@ util.on(window, "unload", function() {
     }
   }
 });
-util.on(window, "online", function() {
+util.on(window, "online", function () {
   var socket;
   for (var i = 0; i < sockets.length; i++) {
     socket = sockets[i];
@@ -1222,7 +1216,7 @@ util.on(window, "online", function() {
     }
   }
 });
-util.on(window, "offline", function() {
+util.on(window, "offline", function () {
   var socket;
   for (var i = 0; i < sockets.length; i++) {
     socket = sockets[i];
@@ -1236,9 +1230,9 @@ util.on(window, "offline", function() {
 });
 
 // Defines the module
-const Cettia = {
+var Cettia = {
   // Creates a socket and connects to the server
-  open: function(uris, options) {
+  open: function open(uris, options) {
     // Opens a new socket
     var socket = createSocket(uris, options);
     sockets.push(socket);
@@ -1256,4 +1250,4 @@ const Cettia = {
   // To help debug or apply hotfix only
   util: util
 };
-export default Cettia;
+exports.default = Cettia;

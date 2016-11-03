@@ -1,5 +1,3 @@
-'use strict';
-
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
@@ -25,7 +23,7 @@ var _traverse2 = _interopRequireDefault(_traverse);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-if ((typeof window === 'undefined' ? 'undefined' : _typeof(window)) !== 'object') {
+if (true) {
   window = require("jsdom").jsdom().defaultView;
   window.WebSocket = require("ws");
   window.EventSource = require("eventsource");
@@ -437,7 +435,7 @@ function createSocket(uris, options) {
           if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) !== "object") {
             data = new Uint8Array(data);
           }
-          onevent(window.msgpack.decode(data));
+          onevent(_msgpackLite2.default.decode(data));
         }).on("error", function (error) {
           // If the underlying connection is closed due to this error, accordingly close event
           // will be triggered
@@ -536,7 +534,7 @@ function createSocket(uris, options) {
     var hasBinary = false;
     if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === "object") {
       // Applies to Node.js only
-      hasBinary = window.traverse(data).reduce(function (hasBuffer, e) {
+      hasBinary = (0, _traverse2.default)(data).reduce(function (hasBuffer, e) {
         // 'ArrayBuffer' refers to window.ArrayBuffer not global.ArrayBuffer
         return hasBuffer || Buffer.isBuffer(e) || global.ArrayBuffer.isView(e);
       }, false);
@@ -553,7 +551,7 @@ function createSocket(uris, options) {
 
     // Delegates to the transport
     if (hasBinary) {
-      transport.send(window.msgpack.encode(event));
+      transport.send(_msgpackLite2.default.encode(event));
     } else {
       transport.send(JSON.stringify(event));
     }
