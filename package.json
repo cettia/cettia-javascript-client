@@ -3,11 +3,11 @@
   "version": "1.0.0-Beta1",
   "homepage": "http://cettia.io/projects/cettia-javascript-client/",
   "description": "Cettia client for browser and Node",
-  "main": "dist/cettia.js",
+  "main": "cettia.js",
   "scripts": {
     "test": "grunt test",
-    "build": "babel src/cettia.es6 --out-file dist/cettia.js && npm run browser",
-    "browser": "NODE_ENV=browser babel src/cettia.es6 --out-file dist/browser.js"
+    "build": "babel src/cettia.es6 --out-file cettia.js && npm run browser",
+    "browser": "NODE_ENV=browser babel src/cettia.es6 --out-file browser.js"
   },
   "repository": {
     "type": "git",

@@ -9,7 +9,11 @@ For more information on the project, please see the [website](http://cettia.io/p
 
 To require the code for a browser bundle:
 ```
-import cettia from 'cettia/browser'; // es6
+// es6 import
+import cettia from 'cettia-client/browser';
+
 // or
-var cettia = require('cettia/browser').default;
+
+// require
+var cettia = require('cettia-client/browser').default;
 ```
