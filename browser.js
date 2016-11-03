@@ -23,12 +23,6 @@ var _traverse2 = _interopRequireDefault(_traverse);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-if (false) {
-  window = require("jsdom").jsdom().defaultView;
-  window.WebSocket = require("ws");
-  window.EventSource = require("eventsource");
-}
-
 // A global identifier
 var guid = 1;
 // Prototype shortcuts
