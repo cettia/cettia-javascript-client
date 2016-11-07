@@ -5,15 +5,43 @@ Cettia JavaScript Client is a lightweight JavaScript client for browser-based an
 
 For more information on the project, please see the [website](http://cettia.io/projects/cettia-javascript-client).
 
-### Using with webpack:
+### Using with Node...
 
 To require the code for a browser bundle:
+
+```
+$ npm install --save cettia-client
+```
+
 ```
 // es6 import
-import cettia from 'cettia-client/browser';
+import cettia from 'cettia-client';
 
-// or
+// or require
+var cettia = require('cettia-client');
+```
 
-// require
-var cettia = require('cettia-client/browser').default;
+### Using with bundlers webpack/browserify/etc...
+
+To require the code for a browser bundle:
+
+NPM install
+```
+$ npm install --save cettia-client
+```
+
+```
+// es6 import
+import cettia from 'cettia-client/cettia-bundler';
+
+// or require
+var cettia = require('cettia-client/cettia-bundler');
+```
+
+### Using in an embedded script tag
+
+Copy the src file
+
+```
+<script src="path/to/cettia/cettia-browser.min.js" />
 ```

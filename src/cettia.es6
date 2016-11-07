@@ -1256,4 +1256,4 @@ const Cettia = {
   // To help debug or apply hotfix only
   util: util
 };
-export default Cettia;
+module.exports = Cettia;

@@ -6,9 +6,11 @@
   "main": "cettia.js",
   "scripts": {
     "test": "grunt test",
-    "build": "babel src/cettia.es6 --out-file cettia.js && npm run bundler && npm run browser",
+    "build": "npm run base; npm run bundler; npm run browser; npm run browserMin",
+    "base": "babel src/cettia.es6 --out-file cettia.js",
     "bundler": "NODE_ENV=browser babel src/cettia.es6 --out-file cettia-bundler.js",
-    "browser": "webpack cettia-bundler.js cettia-browser.min.js --optimize-minimize --optimize-occurence-order && webpack cettia-bundler.js cettia-browser.js"
+    "browser": "webpack cettia-bundler.js cettia-browser.js --output-library cettia",
+    "browserMin": "webpack cettia-bundler.js cettia-browser.min.js --output-library cettia --optimize-minimize --optimize-occurence-order"
   },
   "repository": {
     "type": "git",

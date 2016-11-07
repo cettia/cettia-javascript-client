@@ -2,7 +2,7 @@ var domain = require("domain");
 var http = require("http");
 var Mocha = require("mocha");
 var url = require("url");
-var cettia = require("./cettia").default;
+var cettia = require("./cettia");
 
 http.globalAgent.maxSockets = Infinity;
 
