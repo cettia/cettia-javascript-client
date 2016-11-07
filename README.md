@@ -40,7 +40,7 @@ var cettia = require('cettia-client/cettia-bundler');
 
 ### Using in an embedded script tag
 
-Copy the src file
+Copy the cettia-browser.min.js file from this repo into your project's public folder.
 
 ```
 <script src="path/to/cettia/cettia-browser.min.js" />
