@@ -14,10 +14,6 @@ if (process.env.NODE_ENV !== "browser") {
   window = require("jsdom").jsdom().defaultView;
   window.WebSocket = require("ws");
   window.EventSource = require("eventsource");
-} else {
-  let t = require("text-encoding");
-  window.TextEncoder = t.TextEncoder;
-  window.TextDecoder = t.TextDecoder;
 }
 
 // A global identifier
@@ -429,7 +425,7 @@ function createSocket(uris, options) {
               .on("binary", function(data) {
                 // In browser, data is ArrayBuffer and should be wrapped in Uint8Array
                 // In Node, data should be Buffer
-                if (typeof exports !== "object") {
+                if ((process.env.NODE_ENV === "browser") {
                   data = new Uint8Array(data);
                 }
                 onevent(msgpack.decode(data));
@@ -536,7 +532,7 @@ function createSocket(uris, options) {
 
     // Determines if the given data contains binary
     var hasBinary = false;
-    if (typeof exports === "object") {
+    if (process.env.NODE_ENV !== "browser") {
       // Applies to Node.js only
       hasBinary = traverse(data).reduce(function(hasBuffer, e) {
         // 'ArrayBuffer' refers to window.ArrayBuffer not global.ArrayBuffer
@@ -729,7 +725,7 @@ function createHttpBaseTransport(uri, options) {
       } else {
         // ArrayBuffer can be sent by only XMLHttpRequest 2
         xhr.setRequestHeader("Content-Type", "application/octet-stream");
-        if (typeof exports === "object") {
+        if (process.env.NODE_ENV !== "browser") {
           // API for Node is supposed to send Buffer but jsdom's XMLHttpRequest doesn't
           // support doing that so convert it to ArrayBuffer
           data = new Uint8Array(data).buffer;
@@ -857,7 +853,7 @@ function createHttpStreamBaseTransport(uri, options) {
           break;
         case "2":
           // The same condition used in UMD
-          if (typeof exports === "object") {
+          if (process.env.NODE_ENV !== "browser") {
             data = new Buffer(data, "base64");
           } else {
             // Decodes Base64 encoded string
@@ -1075,7 +1071,7 @@ function createHttpLongpollBaseTransport(uri, options) {
               self.fire("text", data);
             } else {
               // Practically this case only happens with XMLHttpRequest 2
-              if (typeof exports === "object") {
+              if (process.env.NODE_ENV !== "browser") {
                 // Even in Node, data is ArrayBuffer not Buffer because of jsdom
                 // According to API for Node, binary event should receive Buffer
                 data = new Buffer(new Uint8Array(data));
