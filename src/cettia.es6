@@ -425,7 +425,7 @@ function createSocket(uris, options) {
               .on("binary", function(data) {
                 // In browser, data is ArrayBuffer and should be wrapped in Uint8Array
                 // In Node, data should be Buffer
-                if ((process.env.NODE_ENV === "browser") {
+                if (process.env.NODE_ENV === "browser") {
                   data = new Uint8Array(data);
                 }
                 onevent(msgpack.decode(data));
