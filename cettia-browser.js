@@ -5124,7 +5124,7 @@ var cettia =
 	        // 2. Otherwise, i < n−1:
 	        else {
 	          // 1. Let d be the code unit in S at index i+1.
-	          var d = s.charCodeAt(i + 1);
+	          var d = string.charCodeAt(i + 1);
 
 	          // 2. If 0xDC00 ≤ d ≤ 0xDFFF, then:
 	          if (0xDC00 <= d && d <= 0xDFFF) {
@@ -5502,7 +5502,7 @@ var cettia =
 	            "iso-8859-8-i",
 	            "logical"
 	          ],
-	          "name": "ISO-8859-8-I"
+	          "name": "ISO-8859-8-i"
 	        },
 	        {
 	          "labels": [
@@ -5894,7 +5894,7 @@ var cettia =
 	    // its corresponding code point.
 	    var offset = 0;
 	    var code_point_offset = 0;
-	    var idx = index('gb18030-ranges');
+	    var idx = index('gb18030');
 	    var i;
 	    for (i = 0; i < idx.length; ++i) {
 	      /** @type {!Array.<number>} */
@@ -5926,7 +5926,7 @@ var cettia =
 	    // be its corresponding pointer.
 	    var offset = 0;
 	    var pointer_offset = 0;
-	    var idx = index('gb18030-ranges');
+	    var idx = index('gb18030');
 	    var i;
 	    for (i = 0; i < idx.length; ++i) {
 	      /** @type {!Array.<number>} */
@@ -5945,24 +5945,21 @@ var cettia =
 	  }
 
 	  /**
-	   * @param {number} code_point The |code_point| to search for in the Shift_JIS
+	   * @param {number} code_point The |code_point| to search for in the shift_jis
 	   *     index.
 	   * @return {?number} The code point corresponding to |pointer| in |index|,
-	   *     or null if |code point| is not in the Shift_JIS index.
+	   *     or null if |code point| is not in the shift_jis index.
 	   */
 	  function indexShiftJISPointerFor(code_point) {
-	    // 1. Let index be index jis0208 excluding all entries whose
-	    // pointer is in the range 8272 to 8835, inclusive.
-	    shift_jis_index = shift_jis_index ||
-	      index('jis0208').map(function(code_point, pointer) {
-	        return inRange(pointer, 8272, 8835) ? null : code_point;
-	      });
-	    var index_ = shift_jis_index;
+	    // 1. Let index be index jis0208 excluding all pointers in the
+	    // range 8272 to 8835.
+	    var pointer = indexPointerFor(code_point, index('jis0208'));
+	    if (pointer === null || inRange(pointer, 8272, 8835))
+	      return null;
 
 	    // 2. Return the index pointer for code point in index.
-	    return index_.indexOf(code_point);
+	    return pointer;
 	  }
-	  var shift_jis_index;
 
 	  /**
 	   * @param {number} code_point The |code_point| to search for in the big5
@@ -5971,12 +5968,9 @@ var cettia =
 	   *     or null if |code point| is not in the big5 index.
 	   */
 	  function indexBig5PointerFor(code_point) {
-	    // 1. Let index be index Big5 excluding all entries whose pointer
-	    big5_index_no_hkscs = big5_index_no_hkscs ||
-	      index('big5').map(function(code_point, pointer) {
-	        return (pointer < (0xA1 - 0x81) * 157) ? null : code_point;
-	      });
-	    var index_ = big5_index_no_hkscs;
+
+	    // 1. Let index be index big5.
+	    var index_ = index('big5');
 
 	    // 2. If code point is U+2550, U+255E, U+2561, U+256A, U+5341, or
 	    // U+5345, return the last pointer corresponding to code point in
@@ -5990,7 +5984,6 @@ var cettia =
 	    // 3. Return the index pointer for code point in index.
 	    return indexPointerFor(code_point, index_);
 	  }
-	  var big5_index_no_hkscs;
 
 	  //
 	  // 8. API
@@ -6225,13 +6218,15 @@ var cettia =
 
 	  /**
 	   * @constructor
-	   * @param {string=} label The label of the encoding. NONSTANDARD.
-	   * @param {Object=} options NONSTANDARD.
+	   * @param {string=} label The label of the encoding;
+	   *     defaults to 'utf-8'.
+	   * @param {Object=} options
 	   */
 	  function TextEncoder(label, options) {
 	    // Web IDL conventions
 	    if (!(this instanceof TextEncoder))
 	      throw TypeError('Called as a function. Did you forget \'new\'?');
+	    label = label !== undefined ? String(label) : DEFAULT_ENCODING;
 	    options = ToDictionary(options);
 
 	    // A TextEncoder object has an associated encoding and encoder.
@@ -6247,36 +6242,34 @@ var cettia =
 	    /** @private @type {string} */
 	    this._fatal = Boolean(options['fatal']) ? 'fatal' : 'replacement';
 
-	    // 1. Let enc be a new TextEncoder object.
+	    // 1. Let encoding be the result of getting an encoding from utfLabel.
+	    var encoding = getEncoding(label);
+
+	    // 2. If encoding is failure, or is not UTF-8, UTF-16BE, or
+	    // UTF-16LE, throw a RangeError.
+	    if (encoding === null || encoding.name === 'replacement' ||
+	        (!includes(['UTF-8','UTF-16LE', 'UTF-16BE'], encoding.name) &&
+	         !Boolean(options['NONSTANDARD_allowLegacyEncoding'])))
+	      throw RangeError('Unknown encoding: ' + label);
+	    if (!encoders[encoding.name]) {
+	      throw Error('Encoder not present.' +
+	                  ' Did you forget to include encoding-indexes.js?');
+	    }
+
+	    // 3. Let enc be a new TextEncoder object.
 	    var enc = this;
 
-	    // 2. Set enc's encoding to UTF-8's encoder.
-	    if (Boolean(options['NONSTANDARD_allowLegacyEncoding'])) {
-	      // NONSTANDARD behavior.
-	      label = label !== undefined ? String(label) : DEFAULT_ENCODING;
-	      var encoding = getEncoding(label);
-	      if (encoding === null || encoding.name === 'replacement')
-	        throw RangeError('Unknown encoding: ' + label);
-	      if (!encoders[encoding.name]) {
-	        throw Error('Encoder not present.' +
-	                    ' Did you forget to include encoding-indexes.js?');
-	      }
-	      enc._encoding = encoding;
-	    } else {
-	      // Standard behavior.
-	      enc._encoding = getEncoding('utf-8');
+	    // 4. Set enc's encoding to encoding.
+	    enc._encoding = encoding;
 
-	      if (label !== undefined && 'console' in global) {
-	        console.warn('TextEncoder constructor called with encoding label, '
-	                     + 'which is ignored.');
-	      }
-	    }
+	    // 5. Set enc's encoder to a new enc's encoding's encoder.
+	    // (Done during encode itself, due to nonstandard streaming support.)
 
 	    // For pre-ES5 runtimes:
 	    if (!Object.defineProperty)
 	      this.encoding = enc._encoding.name.toLowerCase();
 
-	    // 3. Return enc.
+	    // 6. Return enc.
 	    return enc;
 	  }
 
@@ -6403,12 +6396,11 @@ var cettia =
 	        }
 
 	        // 0xC2 to 0xDF
-	        else if (inRange(bite, 0xC2, 0xDF)) {
-	          // 1. Set utf-8 bytes needed to 1.
+	        if (inRange(bite, 0xC2, 0xDF)) {
+	          // Set utf-8 bytes needed to 1 and utf-8 code point to byte
+	          // − 0xC0.
 	          utf8_bytes_needed = 1;
-
-	          // 2. Set UTF-8 code point to byte & 0x1F.
-	          utf8_code_point = bite & 0x1F;
+	          utf8_code_point = bite - 0xC0;
 	        }
 
 	        // 0xE0 to 0xEF
@@ -6419,10 +6411,10 @@ var cettia =
 	          // 2. If byte is 0xED, set utf-8 upper boundary to 0x9F.
 	          if (bite === 0xED)
 	            utf8_upper_boundary = 0x9F;
-	          // 3. Set utf-8 bytes needed to 2.
+	          // 3. Set utf-8 bytes needed to 2 and utf-8 code point to
+	          // byte − 0xE0.
 	          utf8_bytes_needed = 2;
-	          // 4. Set UTF-8 code point to byte & 0xF.
-	          utf8_code_point = bite & 0xF;
+	          utf8_code_point = bite - 0xE0;
 	        }
 
 	        // 0xF0 to 0xF4
@@ -6433,10 +6425,10 @@ var cettia =
 	          // 2. If byte is 0xF4, set utf-8 upper boundary to 0x8F.
 	          if (bite === 0xF4)
 	            utf8_upper_boundary = 0x8F;
-	          // 3. Set utf-8 bytes needed to 3.
+	          // 3. Set utf-8 bytes needed to 3 and utf-8 code point to
+	          // byte − 0xF0.
 	          utf8_bytes_needed = 3;
-	          // 4. Set UTF-8 code point to byte & 0x7.
-	          utf8_code_point = bite & 0x7;
+	          utf8_code_point = bite - 0xF0;
 	        }
 
 	        // Otherwise
@@ -6445,7 +6437,10 @@ var cettia =
 	          return decoderError(fatal);
 	        }
 
-	        // Return continue.
+	        // Then (byte is in the range 0xC2 to 0xF4, inclusive) set
+	        // utf-8 code point to utf-8 code point << (6 × utf-8 bytes
+	        // needed) and return continue.
+	        utf8_code_point = utf8_code_point << (6 * utf8_bytes_needed);
 	        return null;
 	      }
 
@@ -6472,26 +6467,26 @@ var cettia =
 	      utf8_lower_boundary = 0x80;
 	      utf8_upper_boundary = 0xBF;
 
-	      // 6. Set UTF-8 code point to (UTF-8 code point << 6) | (byte &
-	      // 0x3F)
-	      utf8_code_point = (utf8_code_point << 6) | (bite & 0x3F);
-
-	      // 7. Increase utf-8 bytes seen by one.
+	      // 6. Increase utf-8 bytes seen by one and set utf-8 code point
+	      // to utf-8 code point + (byte − 0x80) << (6 × (utf-8 bytes
+	      // needed − utf-8 bytes seen)).
 	      utf8_bytes_seen += 1;
+	      utf8_code_point += (bite - 0x80) << (6 * (utf8_bytes_needed -
+	                                                utf8_bytes_seen));
 
-	      // 8. If utf-8 bytes seen is not equal to utf-8 bytes needed,
+	      // 7. If utf-8 bytes seen is not equal to utf-8 bytes needed,
 	      // continue.
 	      if (utf8_bytes_seen !== utf8_bytes_needed)
 	        return null;
 
-	      // 9. Let code point be utf-8 code point.
+	      // 8. Let code point be utf-8 code point.
 	      var code_point = utf8_code_point;
 
-	      // 10. Set utf-8 code point, utf-8 bytes needed, and utf-8 bytes
+	      // 9. Set utf-8 code point, utf-8 bytes needed, and utf-8 bytes
 	      // seen to 0.
 	      utf8_code_point = utf8_bytes_needed = utf8_bytes_seen = 0;
 
-	      // 11. Return a code point whose value is code point.
+	      // 10. Return a code point whose value is code point.
 	      return code_point;
 	    };
 	  }
@@ -6514,9 +6509,9 @@ var cettia =
 	      if (code_point === end_of_stream)
 	        return finished;
 
-	      // 2. If code point is an ASCII code point, return a byte whose
-	      // value is code point.
-	      if (isASCIICodePoint(code_point))
+	      // 2. If code point is in the range U+0000 to U+007F, return a
+	      // byte whose value is code point.
+	      if (inRange(code_point, 0x0000, 0x007f))
 	        return code_point;
 
 	      // 3. Set count and offset based on the range code point is in:
@@ -6540,7 +6535,7 @@ var cettia =
 	        offset = 0xF0;
 	      }
 
-	      // 4. Let bytes be a byte sequence whose first byte is (code
+	      // 4.Let bytes be a byte sequence whose first byte is (code
 	      // point >> (6 × count)) + offset.
 	      var bytes = [(code_point >> (6 * count)) + offset];
 
@@ -6737,14 +6732,14 @@ var cettia =
 	      if (gb18030_third !== 0x00) {
 	        // 1. Let code point be null.
 	        code_point = null;
-	        // 2. If byte is in the range 0x30 to 0x39, inclusive, set
-	        // code point to the index gb18030 ranges code point for
-	        // (((gb18030 first − 0x81) × 10 + gb18030 second − 0x30) ×
-	        // 126 + gb18030 third − 0x81) × 10 + byte − 0x30.
+	        // 2. If byte is in the range 0x30 to 0x39, set code point to
+	        // the index gb18030 ranges code point for (((gb18030 first −
+	        // 0x81) × 10 + gb18030 second − 0x30) × 126 + gb18030 third −
+	        // 0x81) × 10 + byte − 0x30.
 	        if (inRange(bite, 0x30, 0x39)) {
 	          code_point = indexGB18030RangesCodePointFor(
-	              (((gb18030_first - 0x81) * 10 + gb18030_second - 0x30) * 126 +
-	               gb18030_third - 0x81) * 10 + bite - 0x30);
+	              (((gb18030_first - 0x81) * 10 + (gb18030_second - 0x30)) * 126 +
+	               (gb18030_third - 0x81)) * 10 + bite - 0x30);
 	        }
 
 	        // 3. Let buffer be a byte sequence consisting of gb18030
@@ -6771,8 +6766,8 @@ var cettia =
 	      // 4. If gb18030 second is not 0x00, run these substeps:
 	      if (gb18030_second !== 0x00) {
 
-	        // 1. If byte is in the range 0x81 to 0xFE, inclusive, set
-	        // gb18030 third to byte and return continue.
+	        // 1. If byte is in the range 0x81 to 0xFE, set gb18030 third
+	        // to byte and return continue.
 	        if (inRange(bite, 0x81, 0xFE)) {
 	          gb18030_third = bite;
 	          return null;
@@ -6789,8 +6784,8 @@ var cettia =
 	      // 5. If gb18030 first is not 0x00, run these substeps:
 	      if (gb18030_first !== 0x00) {
 
-	        // 1. If byte is in the range 0x30 to 0x39, inclusive, set
-	        // gb18030 second to byte and return continue.
+	        // 1. If byte is in the range 0x30 to 0x39, set gb18030 second
+	        // to byte and return continue.
 	        if (inRange(bite, 0x30, 0x39)) {
 	          gb18030_second = bite;
 	          return null;
@@ -6806,9 +6801,8 @@ var cettia =
 	        // otherwise.
 	        var offset = bite < 0x7F ? 0x40 : 0x41;
 
-	        // 4. If byte is in the range 0x40 to 0x7E, inclusive, or 0x80
-	        // to 0xFE, inclusive, set pointer to (lead − 0x81) × 190 +
-	        // (byte − offset).
+	        // 4. If byte is in the range 0x40 to 0x7E or 0x80 to 0xFE,
+	        // set pointer to (lead − 0x81) × 190 + (byte − offset).
 	        if (inRange(bite, 0x40, 0x7E) || inRange(bite, 0x80, 0xFE))
 	          pointer = (lead - 0x81) * 190 + (bite - offset);
 
@@ -6839,8 +6833,8 @@ var cettia =
 	      if (bite === 0x80)
 	        return 0x20AC;
 
-	      // 8. If byte is in the range 0x81 to 0xFE, inclusive, set
-	      // gb18030 first to byte and return continue.
+	      // 8. If byte is in the range 0x81 to 0xFE, set gb18030 first to
+	      // byte and return continue.
 	      if (inRange(bite, 0x81, 0xFE)) {
 	        gb18030_first = bite;
 	        return null;
@@ -6954,9 +6948,9 @@ var cettia =
 	  // 12. Legacy multi-byte Chinese (traditional) encodings
 	  //
 
-	  // 12.1 Big5
+	  // 12.1 big5
 
-	  // 12.1.1 Big5 decoder
+	  // 12.1.1 big5 decoder
 	  /**
 	   * @constructor
 	   * @implements {Decoder}
@@ -6964,8 +6958,8 @@ var cettia =
 	   */
 	  function Big5Decoder(options) {
 	    var fatal = options.fatal;
-	    // Big5's decoder has an associated Big5 lead (initially 0x00).
-	    var /** @type {number} */ Big5_lead = 0x00;
+	    // big5's decoder has an associated big5 lead (initially 0x00).
+	    var /** @type {number} */ big5_lead = 0x00;
 
 	    /**
 	     * @param {Stream} stream The stream of bytes being decoded.
@@ -6975,33 +6969,32 @@ var cettia =
 	     *     stream to decode a complete code point.
 	     */
 	    this.handler = function(stream, bite) {
-	      // 1. If byte is end-of-stream and Big5 lead is not 0x00, set
-	      // Big5 lead to 0x00 and return error.
-	      if (bite === end_of_stream && Big5_lead !== 0x00) {
-	        Big5_lead = 0x00;
+	      // 1. If byte is end-of-stream and big5 lead is not 0x00, set
+	      // big5 lead to 0x00 and return error.
+	      if (bite === end_of_stream && big5_lead !== 0x00) {
+	        big5_lead = 0x00;
 	        return decoderError(fatal);
 	      }
 
-	      // 2. If byte is end-of-stream and Big5 lead is 0x00, return
+	      // 2. If byte is end-of-stream and big5 lead is 0x00, return
 	      // finished.
-	      if (bite === end_of_stream && Big5_lead === 0x00)
+	      if (bite === end_of_stream && big5_lead === 0x00)
 	        return finished;
 
-	      // 3. If Big5 lead is not 0x00, let lead be Big5 lead, let
-	      // pointer be null, set Big5 lead to 0x00, and then run these
+	      // 3. If big5 lead is not 0x00, let lead be big5 lead, let
+	      // pointer be null, set big5 lead to 0x00, and then run these
 	      // substeps:
-	      if (Big5_lead !== 0x00) {
-	        var lead = Big5_lead;
+	      if (big5_lead !== 0x00) {
+	        var lead = big5_lead;
 	        var pointer = null;
-	        Big5_lead = 0x00;
+	        big5_lead = 0x00;
 
 	        // 1. Let offset be 0x40 if byte is less than 0x7F and 0x62
 	        // otherwise.
 	        var offset = bite < 0x7F ? 0x40 : 0x62;
 
-	        // 2. If byte is in the range 0x40 to 0x7E, inclusive, or 0xA1
-	        // to 0xFE, inclusive, set pointer to (lead − 0x81) × 157 +
-	        // (byte − offset).
+	        // 2. If byte is in the range 0x40 to 0x7E or 0xA1 to 0xFE,
+	        // set pointer to (lead − 0x81) × 157 + (byte − offset).
 	        if (inRange(bite, 0x40, 0x7E) || inRange(bite, 0xA1, 0xFE))
 	          pointer = (lead - 0x81) * 157 + (bite - offset);
 
@@ -7022,7 +7015,7 @@ var cettia =
 	        }
 
 	        // 4. Let code point be null if pointer is null and the index
-	        // code point for pointer in index Big5 otherwise.
+	        // code point for pointer in index big5 otherwise.
 	        var code_point = (pointer === null) ? null :
 	            indexCodePointFor(pointer, index('big5'));
 
@@ -7044,10 +7037,10 @@ var cettia =
 	      if (isASCIIByte(bite))
 	        return bite;
 
-	      // 5. If byte is in the range 0x81 to 0xFE, inclusive, set Big5
-	      // lead to byte and return continue.
+	      // 5. If byte is in the range 0x81 to 0xFE, set big5 lead to
+	      // byte and return continue.
 	      if (inRange(bite, 0x81, 0xFE)) {
-	        Big5_lead = bite;
+	        big5_lead = bite;
 	        return null;
 	      }
 
@@ -7056,7 +7049,7 @@ var cettia =
 	    };
 	  }
 
-	  // 12.1.2 Big5 encoder
+	  // 12.1.2 big5 encoder
 	  /**
 	   * @constructor
 	   * @implements {Encoder}
@@ -7079,7 +7072,7 @@ var cettia =
 	      if (isASCIICodePoint(code_point))
 	        return code_point;
 
-	      // 3. Let pointer be the index Big5 pointer for code point.
+	      // 3. Let pointer be the index big5 pointer for code point.
 	      var pointer = indexBig5PointerFor(code_point);
 
 	      // 4. If pointer is null, return error with code point.
@@ -7156,16 +7149,16 @@ var cettia =
 	        return finished;
 
 	      // 3. If euc-jp lead is 0x8E and byte is in the range 0xA1 to
-	      // 0xDF, inclusive, set euc-jp lead to 0x00 and return a code
-	      // point whose value is 0xFF61 − 0xA1 + byte.
+	      // 0xDF, set euc-jp lead to 0x00 and return a code point whose
+	      // value is 0xFF61 + byte − 0xA1.
 	      if (eucjp_lead === 0x8E && inRange(bite, 0xA1, 0xDF)) {
 	        eucjp_lead = 0x00;
-	        return 0xFF61 - 0xA1 + bite;
+	        return 0xFF61 + bite - 0xA1;
 	      }
 
 	      // 4. If euc-jp lead is 0x8F and byte is in the range 0xA1 to
-	      // 0xFE, inclusive, set the euc-jp jis0212 flag, set euc-jp lead
-	      // to byte, and return continue.
+	      // 0xFE, set the euc-jp jis0212 flag, set euc-jp lead to byte,
+	      // and return continue.
 	      if (eucjp_lead === 0x8F && inRange(bite, 0xA1, 0xFE)) {
 	        eucjp_jis0212_flag = true;
 	        eucjp_lead = bite;
@@ -7181,10 +7174,10 @@ var cettia =
 	        // 1. Let code point be null.
 	        var code_point = null;
 
-	        // 2. If lead and byte are both in the range 0xA1 to 0xFE,
-	        // inclusive, set code point to the index code point for (lead
-	        // − 0xA1) × 94 + byte − 0xA1 in index jis0208 if the euc-jp
-	        // jis0212 flag is unset and in index jis0212 otherwise.
+	        // 2. If lead and byte are both in the range 0xA1 to 0xFE, set
+	        // code point to the index code point for (lead − 0xA1) × 94 +
+	        // byte − 0xA1 in index jis0208 if the euc-jp jis0212 flag is
+	        // unset and in index jis0212 otherwise.
 	        if (inRange(lead, 0xA1, 0xFE) && inRange(bite, 0xA1, 0xFE)) {
 	          code_point = indexCodePointFor(
 	            (lead - 0xA1) * 94 + (bite - 0xA1),
@@ -7194,8 +7187,8 @@ var cettia =
 	        // 3. Unset the euc-jp jis0212 flag.
 	        eucjp_jis0212_flag = false;
 
-	        // 4. If byte is not in the range 0xA1 to 0xFE, inclusive,
-	        // prepend byte to stream.
+	        // 4. If byte is not in the range 0xA1 to 0xFE, prepend byte
+	        // to stream.
 	        if (!inRange(bite, 0xA1, 0xFE))
 	          stream.prepend(bite);
 
@@ -7212,8 +7205,8 @@ var cettia =
 	      if (isASCIIByte(bite))
 	        return bite;
 
-	      // 7. If byte is 0x8E, 0x8F, or in the range 0xA1 to 0xFE,
-	      // inclusive, set euc-jp lead to byte and return continue.
+	      // 7. If byte is 0x8E, 0x8F, or in the range 0xA1 to 0xFE, set
+	      // euc-jp lead to byte and return continue.
 	      if (bite === 0x8E || bite === 0x8F || inRange(bite, 0xA1, 0xFE)) {
 	        eucjp_lead = bite;
 	        return null;
@@ -7255,9 +7248,8 @@ var cettia =
 	      if (code_point === 0x203E)
 	        return 0x7E;
 
-	      // 5. If code point is in the range U+FF61 to U+FF9F, inclusive,
-	      // return two bytes whose values are 0x8E and code point −
-	      // 0xFF61 + 0xA1.
+	      // 5. If code point is in the range U+FF61 to U+FF9F, return two
+	      // bytes whose values are 0x8E and code point − 0xFF61 + 0xA1.
 	      if (inRange(code_point, 0xFF61, 0xFF9F))
 	        return [0x8E, code_point - 0xFF61 + 0xA1];
 
@@ -7427,9 +7419,9 @@ var cettia =
 	        // 0x21 to 0x5F
 	        if (inRange(bite, 0x21, 0x5F)) {
 	          // Unset the iso-2022-jp output flag and return a code point
-	          // whose value is 0xFF61 − 0x21 + byte.
+	          // whose value is 0xFF61 + byte − 0x21.
 	          iso2022jp_output_flag = false;
-	          return 0xFF61 - 0x21 + bite;
+	          return 0xFF61 + bite - 0x21;
 	        }
 
 	        // end-of-stream
@@ -7744,9 +7736,9 @@ var cettia =
 	    return new ISO2022JPDecoder(options);
 	  };
 
-	  // 13.3 Shift_JIS
+	  // 13.3 shift_jis
 
-	  // 13.3.1 Shift_JIS decoder
+	  // 13.3.1 shift_jis decoder
 	  /**
 	   * @constructor
 	   * @implements {Decoder}
@@ -7754,9 +7746,9 @@ var cettia =
 	   */
 	  function ShiftJISDecoder(options) {
 	    var fatal = options.fatal;
-	    // Shift_JIS's decoder has an associated Shift_JIS lead (initially
+	    // shift_jis's decoder has an associated shift_jis lead (initially
 	    // 0x00).
-	    var /** @type {number} */ Shift_JIS_lead = 0x00;
+	    var /** @type {number} */ shiftjis_lead = 0x00;
 	    /**
 	     * @param {Stream} stream The stream of bytes being decoded.
 	     * @param {number} bite The next byte read from the stream.
@@ -7765,25 +7757,25 @@ var cettia =
 	     *     stream to decode a complete code point.
 	     */
 	    this.handler = function(stream, bite) {
-	      // 1. If byte is end-of-stream and Shift_JIS lead is not 0x00,
-	      // set Shift_JIS lead to 0x00 and return error.
-	      if (bite === end_of_stream && Shift_JIS_lead !== 0x00) {
-	        Shift_JIS_lead = 0x00;
+	      // 1. If byte is end-of-stream and shift_jis lead is not 0x00,
+	      // set shift_jis lead to 0x00 and return error.
+	      if (bite === end_of_stream && shiftjis_lead !== 0x00) {
+	        shiftjis_lead = 0x00;
 	        return decoderError(fatal);
 	      }
 
-	      // 2. If byte is end-of-stream and Shift_JIS lead is 0x00,
+	      // 2. If byte is end-of-stream and shift_jis lead is 0x00,
 	      // return finished.
-	      if (bite === end_of_stream && Shift_JIS_lead === 0x00)
+	      if (bite === end_of_stream && shiftjis_lead === 0x00)
 	        return finished;
 
-	      // 3. If Shift_JIS lead is not 0x00, let lead be Shift_JIS lead,
-	      // let pointer be null, set Shift_JIS lead to 0x00, and then run
+	      // 3. If shift_jis lead is not 0x00, let lead be shift_jis lead,
+	      // let pointer be null, set shift_jis lead to 0x00, and then run
 	      // these substeps:
-	      if (Shift_JIS_lead !== 0x00) {
-	        var lead = Shift_JIS_lead;
+	      if (shiftjis_lead !== 0x00) {
+	        var lead = shiftjis_lead;
 	        var pointer = null;
-	        Shift_JIS_lead = 0x00;
+	        shiftjis_lead = 0x00;
 
 	        // 1. Let offset be 0x40, if byte is less than 0x7F, and 0x41
 	        // otherwise.
@@ -7793,21 +7785,22 @@ var cettia =
 	        // 0xC1 otherwise.
 	        var lead_offset = (lead < 0xA0) ? 0x81 : 0xC1;
 
-	        // 3. If byte is in the range 0x40 to 0x7E, inclusive, or 0x80
-	        // to 0xFC, inclusive, set pointer to (lead − lead offset) ×
-	        // 188 + byte − offset.
+	        // 3. If byte is in the range 0x40 to 0x7E or 0x80 to 0xFC,
+	        // set pointer to (lead − lead offset) × 188 + byte − offset.
 	        if (inRange(bite, 0x40, 0x7E) || inRange(bite, 0x80, 0xFC))
 	          pointer = (lead - lead_offset) * 188 + bite - offset;
 
-	        // 4. If pointer is in the range 8836 to 10715, inclusive,
-	        // return a code point whose value is 0xE000 − 8836 + pointer.
-	        if (inRange(pointer, 8836, 10715))
-	          return 0xE000 - 8836 + pointer;
-
-	        // 5. Let code point be null, if pointer is null, and the
+	        // 4. Let code point be null, if pointer is null, and the
 	        // index code point for pointer in index jis0208 otherwise.
 	        var code_point = (pointer === null) ? null :
 	              indexCodePointFor(pointer, index('jis0208'));
+
+	        // 5. If code point is null and pointer is in the range 8836
+	        // to 10528, return a code point whose value is 0xE000 +
+	        // pointer − 8836.
+	        if (code_point === null && pointer !== null &&
+	            inRange(pointer, 8836, 10528))
+	          return 0xE000 + pointer - 8836;
 
 	        // 6. If code point is null and byte is an ASCII byte, prepend
 	        // byte to stream.
@@ -7827,16 +7820,15 @@ var cettia =
 	      if (isASCIIByte(bite) || bite === 0x80)
 	        return bite;
 
-	      // 5. If byte is in the range 0xA1 to 0xDF, inclusive, return a
-	      // code point whose value is 0xFF61 − 0xA1 + byte.
+	      // 5. If byte is in the range 0xA1 to 0xDF, return a code point
+	      // whose value is 0xFF61 + byte − 0xA1.
 	      if (inRange(bite, 0xA1, 0xDF))
-	        return 0xFF61 - 0xA1 + bite;
+	        return 0xFF61 + bite - 0xA1;
 
-	      // 6. If byte is in the range 0x81 to 0x9F, inclusive, or 0xE0
-	      // to 0xFC, inclusive, set Shift_JIS lead to byte and return
-	      // continue.
+	      // 6. If byte is in the range 0x81 to 0x9F or 0xE0 to 0xFC, set
+	      // shift_jis lead to byte and return continue.
 	      if (inRange(bite, 0x81, 0x9F) || inRange(bite, 0xE0, 0xFC)) {
-	        Shift_JIS_lead = bite;
+	        shiftjis_lead = bite;
 	        return null;
 	      }
 
@@ -7845,7 +7837,7 @@ var cettia =
 	    };
 	  }
 
-	  // 13.3.2 Shift_JIS encoder
+	  // 13.3.2 shift_jis encoder
 	  /**
 	   * @constructor
 	   * @implements {Encoder}
@@ -7876,8 +7868,8 @@ var cettia =
 	      if (code_point === 0x203E)
 	        return 0x7E;
 
-	      // 5. If code point is in the range U+FF61 to U+FF9F, inclusive,
-	      // return a byte whose value is code point − 0xFF61 + 0xA1.
+	      // 5. If code point is in the range U+FF61 to U+FF9F, return a
+	      // byte whose value is code point − 0xFF61 + 0xA1.
 	      if (inRange(code_point, 0xFF61, 0xFF9F))
 	        return code_point - 0xFF61 + 0xA1;
 
@@ -7885,7 +7877,7 @@ var cettia =
 	      if (code_point === 0x2212)
 	        code_point = 0xFF0D;
 
-	      // 7. Let pointer be the index Shift_JIS pointer for code point.
+	      // 7. Let pointer be the index shift_jis pointer for code point.
 	      var pointer = indexShiftJISPointerFor(code_point);
 
 	      // 8. If pointer is null, return error with code point.
@@ -7966,8 +7958,8 @@ var cettia =
 	        var pointer = null;
 	        euckr_lead = 0x00;
 
-	        // 1. If byte is in the range 0x41 to 0xFE, inclusive, set
-	        // pointer to (lead − 0x81) × 190 + (byte − 0x41).
+	        // 1. If byte is in the range 0x41 to 0xFE, set pointer to
+	        // (lead − 0x81) × 190 + (byte − 0x41).
 	        if (inRange(bite, 0x41, 0xFE))
 	          pointer = (lead - 0x81) * 190 + (bite - 0x41);
 
@@ -7994,8 +7986,8 @@ var cettia =
 	      if (isASCIIByte(bite))
 	        return bite;
 
-	      // 5. If byte is in the range 0x81 to 0xFE, inclusive, set
-	      // euc-kr lead to byte and return continue.
+	      // 5. If byte is in the range 0x81 to 0xFE, set euc-kr lead to
+	      // byte and return continue.
 	      if (inRange(bite, 0x81, 0xFE)) {
 	        euckr_lead = bite;
 	        return null;
@@ -8150,9 +8142,9 @@ var cettia =
 	        var lead_surrogate = utf16_lead_surrogate;
 	        utf16_lead_surrogate = null;
 
-	        // 1. If code unit is in the range U+DC00 to U+DFFF,
-	        // inclusive, return a code point whose value is 0x10000 +
-	        // ((lead surrogate − 0xD800) << 10) + (code unit − 0xDC00).
+	        // 1. If code unit is in the range U+DC00 to U+DFFF, return a
+	        // code point whose value is 0x10000 + ((lead surrogate −
+	        // 0xD800) << 10) + (code unit − 0xDC00).
 	        if (inRange(code_unit, 0xDC00, 0xDFFF)) {
 	          return 0x10000 + (lead_surrogate - 0xD800) * 0x400 +
 	              (code_unit - 0xDC00);
@@ -8165,15 +8157,15 @@ var cettia =
 	        return decoderError(fatal);
 	      }
 
-	      // 6. If code unit is in the range U+D800 to U+DBFF, inclusive,
-	      // set utf-16 lead surrogate to code unit and return continue.
+	      // 6. If code unit is in the range U+D800 to U+DBFF, set utf-16
+	      // lead surrogate to code unit and return continue.
 	      if (inRange(code_unit, 0xD800, 0xDBFF)) {
 	        utf16_lead_surrogate = code_unit;
 	        return null;
 	      }
 
-	      // 7. If code unit is in the range U+DC00 to U+DFFF, inclusive,
-	      // return error.
+	      // 7. If code unit is in the range U+DC00 to U+DFFF, return
+	      // error.
 	      if (inRange(code_unit, 0xDC00, 0xDFFF))
 	        return decoderError(fatal);
 
@@ -8201,9 +8193,9 @@ var cettia =
 	      if (code_point === end_of_stream)
 	        return finished;
 
-	      // 2. If code point is in the range U+0000 to U+FFFF, inclusive,
-	      // return the sequence resulting of converting code point to
-	      // bytes using utf-16be encoder flag.
+	      // 2. If code point is in the range U+0000 to U+FFFF, return the
+	      // sequence resulting of converting code point to bytes using
+	      // utf-16be encoder flag.
 	      if (inRange(code_point, 0x0000, 0xFFFF))
 	        return convertCodeUnitToBytes(code_point, utf16_be);
 
@@ -8301,8 +8293,8 @@ var cettia =
 	      if (isASCIICodePoint(code_point))
 	        return code_point;
 
-	      // 3. If code point is in the range U+F780 to U+F7FF, inclusive,
-	      // return a byte whose value is code point − 0xF780 + 0x80.
+	      // 3. If code point is in the range U+F780 to U+F7FF, return a
+	      // byte whose value is code point − 0xF780 + 0x80.
 	      if (inRange(code_point, 0xF780, 0xF7FF))
 	        return code_point - 0xF780 + 0x80;
 
