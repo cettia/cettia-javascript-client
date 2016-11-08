@@ -14,6 +14,10 @@ if (process.env.NODE_ENV !== "browser") {
   window = require("jsdom").jsdom().defaultView;
   window.WebSocket = require("ws");
   window.EventSource = require("eventsource");
+} else {
+  let t = require("text-encoding");
+  window.TextEncoder = t.TextEncoder;
+  window.TextDecoder = t.TextDecoder;
 }
 
 // A global identifier

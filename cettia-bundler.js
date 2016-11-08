@@ -19,6 +19,12 @@ var _traverse2 = _interopRequireDefault(_traverse);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+{
+  var t = require("text-encoding");
+  window.TextEncoder = t.TextEncoder;
+  window.TextDecoder = t.TextDecoder;
+}
+
 // A global identifier
 var guid = 1;
 // Prototype shortcuts
