@@ -5,7 +5,12 @@
   "description": "Cettia client for browser and Node",
   "main": "cettia.js",
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "build": "npm run base; npm run bundler; npm run browser; npm run browserMin",
+    "base": "babel src/cettia.es6 --out-file cettia.js",
+    "bundler": "NODE_ENV=browser babel src/cettia.es6 --out-file cettia-bundler.js",
+    "browser": "webpack cettia-bundler.js cettia-browser.js --output-library cettia",
+    "browserMin": "webpack cettia-bundler.js cettia-browser.min.js --output-library cettia --optimize-minimize --optimize-occurence-order"
   },
   "repository": {
     "type": "git",
@@ -35,10 +40,14 @@
     "ws": "1.0.1"
   },
   "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-plugin-transform-dead-code-elimination": "^2.2.1",
+    "babel-plugin-transform-node-env-inline": "^6.8.0",
+    "babel-preset-es2015-without-strict": "^0.0.4",
     "cettia-protocol": "1.0.0-Beta1",
-    "grunt": "0.4.5",
-    "mocha": "2.4.5",
     "chai": "3.5.0",
-    "minimist": "1.2.0"
+    "grunt": "0.4.5",
+    "minimist": "1.2.0",
+    "mocha": "2.4.5"
   }
 }

@@ -8,6 +8,8 @@ var _traverse2 = _interopRequireDefault(_traverse);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// A global identifier
+
 /*
  * Cettia v1.0.0-Beta1
  * http://cettia.io/projects/cettia-javascript-client/
@@ -16,11 +18,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-window = require("jsdom").jsdom().defaultView;
-window.WebSocket = require("ws");
-window.EventSource = require("eventsource");
-
-// A global identifier
 var guid = 1;
 // Prototype shortcuts
 var slice = Array.prototype.slice;
@@ -421,9 +418,11 @@ function createSocket(uris, options) {
           }
           onevent(JSON.parse(data));
         }).on("binary", function (data) {
-          onevent(_msgpackLite2.default.decode(data));
           // In browser, data is ArrayBuffer and should be wrapped in Uint8Array
           // In Node, data should be Buffer
+          data = new Uint8Array(data);
+
+          onevent(_msgpackLite2.default.decode(data));
         }).on("error", function (error) {
           // If the underlying connection is closed due to this error, accordingly close event
           // will be triggered
@@ -521,11 +520,14 @@ function createSocket(uris, options) {
     // Determines if the given data contains binary
     var hasBinary = false;
 
-    // Applies to Node.js only
-    hasBinary = (0, _traverse2.default)(data).reduce(function (hasBuffer, e) {
-      // 'ArrayBuffer' refers to window.ArrayBuffer not global.ArrayBuffer
-      return hasBuffer || Buffer.isBuffer(e) || global.ArrayBuffer.isView(e);
-    }, false);
+    // IE 9 doesn't support typed arrays
+    var ArrayBuffer = window.ArrayBuffer;
+    if (ArrayBuffer) {
+      JSON.stringify(data, function (key, value) {
+        hasBinary = hasBinary || ArrayBuffer.isView(value);
+        return value;
+      });
+    }
 
     // Delegates to the transport
     if (hasBinary) {
@@ -703,10 +705,6 @@ function createHttpBaseTransport(uri, options) {
       // ArrayBuffer can be sent by only XMLHttpRequest 2
       xhr.setRequestHeader("Content-Type", "application/octet-stream");
 
-      // API for Node is supposed to send Buffer but jsdom's XMLHttpRequest doesn't
-      // support doing that so convert it to ArrayBuffer
-      data = new Uint8Array(data).buffer;
-
       xhr.send(data);
     }
     return this;
@@ -826,8 +824,16 @@ function createHttpStreamBaseTransport(uri, options) {
           self.fire("text", data);
           break;
         case "2":
+          // Decodes Base64 encoded string
+
           // The same condition used in UMD
-          data = new Buffer(data, "base64");
+          var decoded = atob(data);
+          // And converts it to ArrayBuffer
+          var array = new Uint8Array(data.length);
+          for (var i = 0; i < decoded.length; i++) {
+            array[i] = decoded.charCodeAt(i);
+          }
+          data = array.buffer;
 
           self.fire("binary", data);
           break;
@@ -1032,13 +1038,8 @@ function createHttpLongpollBaseTransport(uri, options) {
             if (typeof data === "string") {
               self.fire("text", data);
             } else {
-              // Even in Node, data is ArrayBuffer not Buffer because of jsdom
-              // According to API for Node, binary event should receive Buffer
-
-              // Practically this case only happens with XMLHttpRequest 2
-              data = new Buffer(new Uint8Array(data));
-
               self.fire("binary", data);
+              // Practically this case only happens with XMLHttpRequest 2
             }
           } else {
             self.fire("close");
