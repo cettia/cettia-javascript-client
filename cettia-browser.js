@@ -58,10 +58,10 @@ var cettia =
 	// A global identifier
 
 	/*
-	 * Cettia v1.0.0-Beta2
+	 * Cettia v1.0.0-RC1
 	 * http://cettia.io/projects/cettia-javascript-client/
 	 * 
-	 * Copyright 2015 the original author or authors.
+	 * Copyright 2017 the original author or authors.
 	 * Licensed under the Apache License, Version 2.0
 	 * http://www.apache.org/licenses/LICENSE-2.0
 	 */
@@ -370,16 +370,16 @@ var cettia =
 	    for (var i = 0; i < candidates.length; i++) {
 	      // Attaches the id to uri
 	      var uri = candidates[i] = util.stringifyURI(util.makeAbsolute(candidates[i]), {
-	        sid: id
+	        "cettia-id": id
 	      });
 	      // Translates an abbreviated uri
-	      if (/^https?:/.test(uri) && !util.parseURI(uri).query.transport) {
+	      if (/^https?:/.test(uri) && !util.parseURI(uri).query["cettia-transport-name"]) {
 	        candidates.splice(i, 1, uri.replace(/^http/, "ws"),
 	        // util.stringifyURI is used since we don't know if uri has already query
 	        util.stringifyURI(uri, {
-	          transport: "stream"
+	          "cettia-transport-name": "stream"
 	        }), util.stringifyURI(uri, {
-	          transport: "longpoll"
+	          "cettia-transport-name": "longpoll"
 	        }));
 	        i = i + 2;
 	      }
@@ -421,14 +421,14 @@ var cettia =
 	        testTransport.off("text", handshaker);
 	        var headers = util.parseURI(data).query;
 	        // An issued id
-	        if (id !== headers.sid) {
-	          id = headers.sid;
+	        if (id !== headers["cettia-id"]) {
+	          id = headers["cettia-id"];
 	          self.fire("new");
 	        }
 	        // An heartbeat option can't be set by user
-	        options.heartbeat = +headers.heartbeat;
+	        options.heartbeat = +headers["cettia-heartbeat"];
 	        // To speed up heartbeat test
-	        options._heartbeat = +headers._heartbeat || 5000;
+	        options._heartbeat = +headers["cettia-_heartbeat"] || 5000;
 	        // Now that handshaking is completed, associates the transport with the socket
 	        transport = testTransport.off("close", find);
 
@@ -704,7 +704,7 @@ var cettia =
 	  var sendURI;
 	  self.on("open", function () {
 	    sendURI = util.stringifyURI(uri, {
-	      id: self.id
+	      "cettia-transport-id": self.id
 	    });
 	  }).on("close", function () {
 	    sendURI = null;
@@ -813,8 +813,8 @@ var cettia =
 	      var script = document.createElement("script");
 	      script.async = false;
 	      script.src = util.stringifyURI(uri, {
-	        id: self.id,
-	        when: "abort"
+	        "cettia-transport-id": self.id,
+	        "cettia-transport-when": "abort"
 	      });
 	      script.onload = script.onerror = function () {
 	        if (script.parentNode) {
@@ -831,7 +831,7 @@ var cettia =
 	}
 
 	function createHttpStreamTransport(uri, options) {
-	  if (/^https?:/.test(uri) && util.parseURI(uri).query.transport === "stream") {
+	  if (/^https?:/.test(uri) && util.parseURI(uri).query["cettia-transport-name"] === "stream") {
 	    return createHttpSseTransport(uri, options) || createHttpStreamXhrTransport(uri, options) || createHttpStreamXdrTransport(uri, options) || createHttpStreamIframeTransport(uri, options);
 	  }
 	}
@@ -861,7 +861,7 @@ var cettia =
 	      handshaked = true;
 	      var query = util.parseURI(data).query;
 	      // Assign a newly issued identifier for this transport
-	      self.id = query.id;
+	      self.id = query["cettia-transport-id"];
 	      self.fire("open");
 	    } else {
 	      var code = data.substring(0, 1);
@@ -898,7 +898,7 @@ var cettia =
 	  var es;
 	  var self = createHttpStreamBaseTransport(uri, options);
 	  self.connect = function () {
-	    es = new EventSource(uri + "&when=open&sse=true", {
+	    es = new EventSource(uri + "&cettia-transport-when=open&cettia-transport-sse=true", {
 	      withCredentials: true
 	    });
 	    es.onmessage = function (event) {
@@ -937,7 +937,7 @@ var cettia =
 	        self.fire("close");
 	      }
 	    };
-	    xhr.open("GET", uri + "&when=open");
+	    xhr.open("GET", uri + "&cettia-transport-when=open");
 	    xhr.withCredentials = true;
 	    xhr.send();
 	  };
@@ -970,7 +970,7 @@ var cettia =
 	    xdr.onload = function () {
 	      self.fire("close");
 	    };
-	    xdr.open("GET", xdrURL.call(self, uri + "&when=open"));
+	    xdr.open("GET", xdrURL.call(self, uri + "&cettia-transport-when=open"));
 	    xdr.send();
 	  };
 	  self.abort = function () {
@@ -1010,7 +1010,7 @@ var cettia =
 	    doc.open();
 	    doc.close();
 	    var iframe = doc.createElement("iframe");
-	    iframe.src = uri + "&when=open";
+	    iframe.src = uri + "&cettia-transport-when=open";
 	    doc.body.appendChild(iframe);
 	    var cdoc = iframe.contentDocument || iframe.contentWindow.document;
 	    stop = iterate(function () {
@@ -1063,7 +1063,7 @@ var cettia =
 	}
 
 	function createHttpLongpollTransport(uri, options) {
-	  if (/^https?:/.test(uri) && util.parseURI(uri).query.transport === "longpoll") {
+	  if (/^https?:/.test(uri) && util.parseURI(uri).query["cettia-transport-name"] === "longpoll") {
 	    return createHttpLongpollAjaxTransport(uri, options) || createHttpLongpollXdrTransport(uri, options) || createHttpLongpollJsonpTransport(uri, options);
 	  }
 	}
@@ -1071,14 +1071,14 @@ var cettia =
 	function createHttpLongpollBaseTransport(uri, options) {
 	  var self = createHttpBaseTransport(uri, options);
 	  self.connect = function () {
-	    self.poll(uri + "&when=open", function (data) {
+	    self.poll(uri + "&cettia-transport-when=open", function (data) {
 	      var query = util.parseURI(data).query;
 	      // Assign a newly issued identifier for this transport
-	      self.id = query.id;
+	      self.id = query["cettia-transport-id"];
 	      (function poll() {
 	        self.poll(util.stringifyURI(uri, {
-	          id: self.id,
-	          when: "poll"
+	          "cettia-transport-id": self.id,
+	          "cettia-transport-when": "poll"
 	        }), function (data) {
 	          if (data) {
 	            poll();
@@ -1188,8 +1188,8 @@ var cettia =
 	    script.async = true;
 	    // In fact, jsonp and callback params are only for first request
 	    script.src = util.stringifyURI(url, {
-	      jsonp: "true",
-	      callback: callback
+	      "cettia-transport-jsonp": "true",
+	      "cettia-transport-callback": callback
 	    });
 	    script.onload = script.onerror = function (event) {
 	      if (script.parentNode) {
