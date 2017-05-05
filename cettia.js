@@ -326,6 +326,7 @@ function createSocket(uris, options) {
     for (var i = 0; i < candidates.length; i++) {
       // Attaches the id to uri
       var uri = candidates[i] = util.stringifyURI(util.makeAbsolute(candidates[i]), {
+        "cettia-version": "1.0",
         "cettia-id": id
       });
       // Translates an abbreviated uri
@@ -845,7 +846,7 @@ function createHttpSseTransport(uri, options) {
   var es;
   var self = createHttpStreamBaseTransport(uri, options);
   self.connect = function () {
-    es = new EventSource(uri + "&cettia-transport-when=open&cettia-transport-sse=true", {
+    es = new EventSource(uri + "&cettia-transport-version=1.0&cettia-transport-when=open&cettia-transport-sse=true", {
       withCredentials: true
     });
     es.onmessage = function (event) {
@@ -884,7 +885,7 @@ function createHttpStreamXhrTransport(uri, options) {
         self.fire("close");
       }
     };
-    xhr.open("GET", uri + "&cettia-transport-when=open");
+    xhr.open("GET", uri + "&cettia-transport-version=1.0&cettia-transport-when=open");
     xhr.withCredentials = true;
     xhr.send();
   };
@@ -917,7 +918,7 @@ function createHttpStreamXdrTransport(uri, options) {
     xdr.onload = function () {
       self.fire("close");
     };
-    xdr.open("GET", xdrURL.call(self, uri + "&cettia-transport-when=open"));
+    xdr.open("GET", xdrURL.call(self, uri + "&cettia-transport-version=1.0&cettia-transport-when=open"));
     xdr.send();
   };
   self.abort = function () {
@@ -957,7 +958,7 @@ function createHttpStreamIframeTransport(uri, options) {
     doc.open();
     doc.close();
     var iframe = doc.createElement("iframe");
-    iframe.src = uri + "&cettia-transport-when=open";
+    iframe.src = uri + "&cettia-transport-version=1.0&cettia-transport-when=open";
     doc.body.appendChild(iframe);
     var cdoc = iframe.contentDocument || iframe.contentWindow.document;
     stop = iterate(function () {
@@ -1018,7 +1019,7 @@ function createHttpLongpollTransport(uri, options) {
 function createHttpLongpollBaseTransport(uri, options) {
   var self = createHttpBaseTransport(uri, options);
   self.connect = function () {
-    self.poll(uri + "&cettia-transport-when=open", function (data) {
+    self.poll(uri + "&cettia-transport-version=1.0&cettia-transport-when=open", function (data) {
       var query = util.parseURI(data).query;
       // Assign a newly issued identifier for this transport
       self.id = query["cettia-transport-id"];
