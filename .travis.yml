@@ -6,3 +6,5 @@ node_js:
   - 7
 before_script:
   - npm install -g grunt-cli
+  - npm i cettia/cettia-protocol#f83e99cdc202b4818c2041b1563ee8a6ac8c8f00
+
