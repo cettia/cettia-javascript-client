@@ -58,7 +58,7 @@ var cettia =
 	// A global identifier
 
 	/*
-	 * Cettia v1.0.0-RC1
+	 * Cettia
 	 * http://cettia.io/projects/cettia-javascript-client/
 	 * 
 	 * Copyright 2017 the original author or authors.

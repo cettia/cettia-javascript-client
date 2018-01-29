@@ -9,7 +9,7 @@ var _traverse2 = _interopRequireDefault(_traverse);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /*
- * Cettia v1.0.0-RC1
+ * Cettia
  * http://cettia.io/projects/cettia-javascript-client/
  * 
  * Copyright 2017 the original author or authors.
