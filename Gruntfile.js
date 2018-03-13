@@ -7,6 +7,15 @@ var cettia = require("./cettia");
 http.globalAgent.maxSockets = Infinity;
 
 module.exports = function(grunt) {
+  grunt.initConfig({
+    simplemocha: {
+      all: {
+        src: ['test/**/*.js']
+      }
+    }
+  });
+  grunt.loadNpmTasks('grunt-simple-mocha');
+
   grunt.registerTask("test-node", function() {
     var done = this.async();
     // Thanks to https://github.com/gregrperkins/grunt-mocha-hack
@@ -81,5 +90,5 @@ module.exports = function(grunt) {
       });
     });
   });
-  grunt.registerTask("test", ["test-node"]);
+  grunt.registerTask("test", ["test-node", "simplemocha"]);
 };
