@@ -344,7 +344,6 @@ function createSocket(uris, options) {
       // If every available transport failed
       if (!uri) {
         // Unlocks close and waiting events
-        // TODO Callbacks seems to be broken
         events.close.unlock();
         events.waiting.unlock();
 
@@ -434,10 +433,6 @@ function createSocket(uris, options) {
           // will be triggered
           self.fire("error", error);
         }).on("close", function () {
-          // TODO Callbacks seems to be broken 2
-          events.close.unlock();
-          events.waiting.unlock();
-
           self.fire("close");
         });
         // And fires open event to socket
