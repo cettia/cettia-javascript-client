@@ -343,10 +343,6 @@ function createSocket(uris, options) {
       var uri = candidates.shift();
       // If every available transport failed
       if (!uri) {
-        // Unlocks close and waiting events
-        events.close.unlock();
-        events.waiting.unlock();
-
         self.fire("error", new Error())
         // Fires the close event instead of executing close method which destorys the socket
         .fire("close");
@@ -649,7 +645,7 @@ function createWebSocketTransport(uri, options) {
     ws.send(data);
   };
   self.close = function () {
-    ws && ws.close();
+    ws.close();
     return this;
   };
   return self;
@@ -863,13 +859,13 @@ function createHttpSseTransport(uri, options) {
       self.onmessage(event.data);
     };
     es.onerror = function () {
-      es && es.close();
+      es.close();
       // There is no way to find whether there was an error or not
       self.fire("close");
     };
   };
   self.abort = function () {
-    es && es.close();
+    es.close();
   };
   return self;
 }
@@ -900,7 +896,7 @@ function createHttpStreamXhrTransport(uri, options) {
     xhr.send();
   };
   self.abort = function () {
-    xhr && xhr.abort();
+    xhr.abort();
   };
   return self;
 }
@@ -932,7 +928,7 @@ function createHttpStreamXdrTransport(uri, options) {
     xdr.send();
   };
   self.abort = function () {
-    xdr && xdr.abort();
+    xdr.abort();
   };
   return self;
 }
@@ -1095,7 +1091,7 @@ function createHttpLongpollAjaxTransport(uri, options) {
     xhr.send(null);
   };
   self.abort = function () {
-    xhr && xhr.abort();
+    xhr.abort();
   };
   return self;
 }
@@ -1123,7 +1119,7 @@ function createHttpLongpollXdrTransport(uri, options) {
     xdr.send();
   };
   self.abort = function () {
-    xdr && xdr.abort();
+    xdr.abort();
   };
   return self;
 }
