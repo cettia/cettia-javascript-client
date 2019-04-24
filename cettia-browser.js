@@ -60,7 +60,7 @@ var cettia =
 	/*
 	 * Cettia
 	 * http://cettia.io/projects/cettia-javascript-client/
-	 * 
+	 *
 	 * Copyright 2017 the original author or authors.
 	 * Licensed under the Apache License, Version 2.0
 	 * http://www.apache.org/licenses/LICENSE-2.0
@@ -310,6 +310,8 @@ var cettia =
 	    // Resets event helpers
 	    events.connecting.unlock();
 	    events.open.unlock();
+	    events.close.unlock();
+	    events.waiting.unlock();
 	    // Fires the connecting event and connects to the server
 	    return self.fire("connecting");
 	  };
