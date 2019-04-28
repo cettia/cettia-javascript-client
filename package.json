@@ -1,6 +1,6 @@
 {
   "name": "cettia-client",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "homepage": "https://cettia.io/",
   "description": "Cettia client for browser and Node",
   "main": "cettia.js",

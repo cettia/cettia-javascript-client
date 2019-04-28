@@ -30,6 +30,11 @@ var XMLHttpRequest = window.XMLHttpRequest;
 // Most are inspired by jQuery
 var util = {};
 util.makeAbsolute = function (url) {
+  // Assumes the given url is absolute in an environment such as React Native where the document is not available
+  if (!document) {
+    return url;
+  }
+
   var div = document.createElement("div");
   // Uses an innerHTML property to obtain an absolute URL
   div.innerHTML = '<a href="' + url + '"/>';
@@ -77,7 +82,8 @@ util.parseURI = function (url) {
 util.corsable = "withCredentials" in new XMLHttpRequest();
 // Browser sniffing
 util.browser = function () {
-  var ua = navigator.userAgent.toLowerCase();
+  // navigator.userAgent is undefined in React Native
+  var ua = (navigator.userAgent || "").toLowerCase();
   var browser = {};
   var match =
   // IE 9-10
@@ -102,6 +108,11 @@ util.browser = function () {
   return browser;
 }();
 util.crossOrigin = function (uri) {
+  // Returns true in an environment such as React Native where the location is not available
+  if (!location) {
+    return true;
+  }
+
   // Origin parts
   var parts = /^([\w\+\.\-]+:)(?:\/\/([^\/?#:]*)(?::(\d+))?)?/.exec(uri.toLowerCase());
   return !!(parts && (
@@ -764,6 +775,11 @@ function createHttpBaseTransport(uri, options) {
     self.abort();
     if (!latch) {
       latch = true;
+      // Skips sending the abort request in an environment like React Native where the document is not available
+      if (!document) {
+        return this;
+      }
+
       // Sends the abort request to the server
       // this request is supposed to work even in unloading event so script tag should be used
       var script = document.createElement("script");
