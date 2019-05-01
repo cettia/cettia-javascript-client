@@ -12,7 +12,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
  * Cettia
  * http://cettia.io/projects/cettia-javascript-client/
  *
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
  */
@@ -640,8 +640,8 @@ function createWebSocketTransport(uri, options) {
       if (typeof event.data === "string") {
         self.fire("text", event.data);
       } else {
-        // event.data is ArrayBuffer in browser and Buffer in Node
-        self.fire("binary", event.data);
+        // As of ws 1.1+, event.data is ArrayBuffer
+        self.fire("binary", Buffer.from(event.data));
       }
     };
     ws.onerror = function () {
@@ -846,7 +846,7 @@ function createHttpStreamBaseTransport(uri, options) {
           break;
         case "2":
           // The same condition used in UMD
-          data = new Buffer(data, "base64");
+          data = Buffer.from(data, "base64");
 
           self.fire("binary", data);
           break;
@@ -1055,7 +1055,7 @@ function createHttpLongpollBaseTransport(uri, options) {
               // According to API for Node, binary event should receive Buffer
 
               // Practically this case only happens with XMLHttpRequest 2
-              data = new Buffer(new Uint8Array(data));
+              data = Buffer.from(new Uint8Array(data));
 
               self.fire("binary", data);
             }

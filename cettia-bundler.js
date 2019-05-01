@@ -9,12 +9,11 @@ var _traverse2 = _interopRequireDefault(_traverse);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 // A global identifier
-
 /*
  * Cettia
  * http://cettia.io/projects/cettia-javascript-client/
  *
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
  */
@@ -642,7 +641,6 @@ function createWebSocketTransport(uri, options) {
       if (typeof event.data === "string") {
         self.fire("text", event.data);
       } else {
-        // event.data is ArrayBuffer in browser and Buffer in Node
         self.fire("binary", event.data);
       }
     };

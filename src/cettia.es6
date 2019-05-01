@@ -1,9 +1,8 @@
-
 /*
  * Cettia
  * http://cettia.io/projects/cettia-javascript-client/
  *
- * Copyright 2017 the original author or authors.
+ * Copyright 2019 the original author or authors.
  * Licensed under the Apache License, Version 2.0
  * http://www.apache.org/licenses/LICENSE-2.0
  */
@@ -662,8 +661,12 @@ function createWebSocketTransport(uri, options) {
       if (typeof event.data === "string") {
         self.fire("text", event.data);
       } else {
-        // event.data is ArrayBuffer in browser and Buffer in Node
-        self.fire("binary", event.data);
+        if (process.env.NODE_ENV !== "browser") {
+          // As of ws 1.1+, event.data is ArrayBuffer
+          self.fire("binary", Buffer.from(event.data));
+        } else {
+          self.fire("binary", event.data);
+        }
       }
     };
     ws.onerror = function() {
@@ -873,7 +876,7 @@ function createHttpStreamBaseTransport(uri, options) {
         case "2":
           // The same condition used in UMD
           if (process.env.NODE_ENV !== "browser") {
-            data = new Buffer(data, "base64");
+            data = Buffer.from(data, "base64");
           } else {
             // Decodes Base64 encoded string
             var decoded = atob(data);
@@ -1093,7 +1096,7 @@ function createHttpLongpollBaseTransport(uri, options) {
               if (process.env.NODE_ENV !== "browser") {
                 // Even in Node, data is ArrayBuffer not Buffer because of jsdom
                 // According to API for Node, binary event should receive Buffer
-                data = new Buffer(new Uint8Array(data));
+                data = Buffer.from(new Uint8Array(data));
               }
               self.fire("binary", data);
             }
