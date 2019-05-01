@@ -10,7 +10,7 @@
     "base": "babel src/cettia.es6 --out-file cettia.js",
     "bundler": "NODE_ENV=browser babel src/cettia.es6 --out-file cettia-bundler.js",
     "browser": "webpack cettia-bundler.js cettia-browser.js --output-library cettia",
-    "browserMin": "webpack cettia-bundler.js cettia-browser.min.js --output-library cettia --optimize-minimize --optimize-occurence-order"
+    "browserMin": "webpack cettia-bundler.js cettia-browser.min.js --output-library cettia --optimize-minimize --optimize-occurrence-order"
   },
   "repository": {
     "type": "git",
@@ -49,6 +49,6 @@
     "grunt": "1.0.4",
     "minimist": "1.2.0",
     "mocha": "5.2.0",
-    "webpack": "^1.15.0"
+    "webpack": "1.15.0"
   }
 }
