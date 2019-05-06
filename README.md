@@ -1,47 +1,73 @@
-## Cettia JavaScript Client
-[![Travis](https://img.shields.io/travis/cettia/cettia-javascript-client.svg)](https://travis-ci.org/cettia/cettia-javascript-client) [![npm](https://img.shields.io/npm/v/cettia-client.svg)](https://www.npmjs.com/package/cettia-client) [![GitHub license](https://img.shields.io/github/license/cettia/cettia-javascript-client.svg)](https://github.com/cettia/cettia-javascript-client/blob/master/LICENSE)
+# Cettia JavaScript Client
 
-Cettia JavaScript Client is a lightweight JavaScript client for browser-based and Node-based application.
+Cettia JavaScript Client is a lightweight JavaScript client for browser-based and Node-based application and distributed via the npm registry with the name, [cettia-client](https://www.npmjs.com/package/cettia-client).
 
-For more information on the project, please see the [website](http://cettia.io/projects/cettia-javascript-client).
+## Installation
 
-### Using with Node...
+### `script` tag
 
-To require the code for a browser bundle:
+Add the following script tag to your HTML.
 
+```html
+<script src="https://cdn.jsdelivr.net/npm/cettia-client/cettia-browser.min.js"></script>
 ```
-$ npm install --save cettia-client
-```
-
-```
-// es6 import
-import cettia from 'cettia-client';
-
-// or require
-var cettia = require('cettia-client');
+```javascript
+window.cettia;
 ```
 
-### Using with bundlers webpack/browserify/etc...
+### Bundler
 
-To require the code for a browser bundle:
-
-NPM install
-```
-$ npm install --save cettia-client
-```
+Install and load the package.
 
 ```
-// es6 import
-import cettia from 'cettia-client/cettia-bundler';
-
-// or require
+npm install cettia-client
+```
+```javascript
 var cettia = require('cettia-client/cettia-bundler');
 ```
 
-### Using in an embedded script tag
+Note: You should use this way to use Cettia in React Native.
 
-Copy the cettia-browser.min.js file from this repo into your project's public folder.
+### Node
+
+Install and load the package.
 
 ```
-<script src="path/to/cettia/cettia-browser.min.js" />
+npm install cettia-client
 ```
+```javascript
+var cettia = require('cettia-client');
+```
+
+## Usage
+
+Cettia will be familiar to people using other real-time web frameworks and libraries. You open a socket and send and receive events with Cettia's API. Here is the main.js contents which is a Node example of the Cettia Starter Kit.
+
+```javascript
+const cettia = require("cettia-client");
+const username = "DH";
+const uri = `http://localhost:8080/cettia?username=${encodeURIComponent(username)}`;
+const socket = cettia.open(uri);
+
+const addMessage = ({sender, text}) => console.log(`${sender} sends ${text}`);
+socket.on("message", addMessage);
+
+const addSystemMessage = text => addMessage({sender: "system", text});
+socket.on("connecting", () => addSystemMessage("The socket starts a connection."));
+socket.on("open", () => addSystemMessage("The socket establishes a connection."));
+socket.on("close", () => addSystemMessage("All transports failed to connect or the connection was disconnected."));
+socket.on("waiting", (delay) => addSystemMessage(`The socket will reconnect after ${delay} ms`));
+
+// Once a socket has opened, sends a message every 5 seconds
+socket.once("open", () => setInterval(() => socket.send("message", {text: `A message - ${Date.now()}`}), 5000));
+```
+
+Besides a Node example, the Cettia starter kit provides Web example and React Native example which demonstrate how you can use Cettia JavaScript Client in various runtime environment.
+
+## See Also
+
+- [Getting Started](https://cettia.io/guides/getting-started/)
+- [Cettia Starter Kit](https://github.com/cettia/cettia-starter-kit)
+- [Building Real-Time Web Applications With Cettia](https://cettia.io/guides/cettia-tutorial) 
+- [Various demo applications using Cettia and Spring 5](https://github.com/ralscha/cettia-demo) by Ralph Schaer
+- [Real-time messaging with Cettia and Spring Boot](https://golb.hplar.ch/2019/01/cettia-springboot.html) by Ralph Schaer
