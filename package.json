@@ -47,7 +47,7 @@
     "cettia-protocol": "1.0.0",
     "chai": "4.2.0",
     "grunt": "1.0.4",
-    "minimist": "1.2.0",
+    "minimist": "1.2.5",
     "mocha": "5.2.0",
     "webpack": "1.15.0"
   }
