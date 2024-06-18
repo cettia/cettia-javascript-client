@@ -37,7 +37,7 @@
     "jsdom": "9.12.0",
     "msgpack-lite": "0.1.26",
     "traverse": "0.6.6",
-    "ws": "5.2.2"
+    "ws": "5.2.4"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
