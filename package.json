@@ -49,6 +49,6 @@
     "grunt": "1.0.4",
     "minimist": "1.2.5",
     "mocha": "5.2.0",
-    "webpack": "1.15.0"
+    "webpack": "5.94.0"
   }
 }
